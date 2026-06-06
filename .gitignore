@@ -148,3 +148,10 @@ game_log.txt
 # Temporary test files
 temp/
 tmp/
+
+# Ignore bundled KataGo binaries and neural net models
+katago/bin/
+katago/models/
+
+# GTP engine logs
+gtp_logs/
