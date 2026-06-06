@@ -258,6 +258,7 @@ class GoBoard:
             True if move was executed, False if game is already over
         """
         self.consecutive_passes += 1
+        self.last_move = None
         self.current_player = -self.current_player
         return True
     

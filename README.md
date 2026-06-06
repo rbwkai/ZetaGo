@@ -24,10 +24,18 @@ A clean, production-ready Go Game engine built with Python and NumPy. Designed f
 
 ```
 ZetaGo/
-├── go_board.py       # Core game logic and rules
-├── play_terminal.py  # Terminal-based interactive gameplay
-├── README.md         # This file
-└── .gitignore        # Git ignore patterns
+├── go_board.py            # Core game logic and rules
+├── play_terminal.py       # Terminal-based interactive gameplay
+├── katago_gtp.py          # KataGo GTP client wrapper
+├── KATAGO_INTEGRATION.md  # Notes for integrating KataGo
+├── README.md              # This file
+├── LICENSE                # Project license
+├── gtp_logs/              # KataGo GTP communication logs
+└── katago/                # KataGo binaries and models
+   ├── bin/
+   │   └── katago
+   └── models/
+      └── <neuralnet>.bin.gz
 ```
 
 ## Installation
@@ -61,6 +69,43 @@ Run the interactive game:
 ```bash
 python play_terminal.py
 ```
+
+When the game starts, choose:
+- `1` for the built-in random bot
+- `2` for KataGo (GTP engine)
+
+### KataGo Engine Setup (Linux)
+
+1. Download KataGo from the [official KataGo releases](https://github.com/lightvector/KataGo/releases) and a `.bin.gz` neural net model from the [official KataGo training site](https://katagotraining.org/). Example: [Link](https://github.com/lightvector/KataGo/releases/download/v1.13.0/b18c384nbt-optimisticv13-s5971M.bin.gz)
+2. Place them in your project (example):
+   ```
+   ZetaGo/
+   ├── katago/
+   │   ├── bin/
+   │   │   ├── katago
+   │   │   └── default_gtp.cfg
+   │   └── models/
+   │       └── b18c384nbt-optimisticv13-s5971M.bin.gz
+   ```
+   Use a CPU build such as `katago-v1.16.5-eigenavx2-linux-x64.zip` if you do not have CUDA libraries installed. Extract it inside the katago/bin directory.
+3. Make KataGo executable:
+   ```bash
+   chmod +x ./katago/bin/katago
+   ```
+4. Optional benchmark/tuning check:
+   ```bash
+   ./katago/bin/katago benchmark -model ./katago/models/<NEURALNET>.bin.gz -config ./katago/bin/default_gtp.cfg
+   ```
+5. Launch the game and pick KataGo opponent:
+   ```bash
+   python play_terminal.py
+   ```
+6. Enter paths when prompted, for example:
+   - Executable: `./katago/bin/katago`
+   - Model: `./katago/models/<NEURALNET>.bin.gz`
+   - Config: `./katago/bin/default_gtp.cfg` (or leave blank)
+
+The game will then query KataGo for bot moves through GTP.
 
 **Game Instructions:**
 - Enter coordinates as `row,col` (e.g., `3,4` for row 3, column 4)
