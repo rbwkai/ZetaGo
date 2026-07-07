@@ -155,3 +155,9 @@ katago/models/
 
 # GTP engine logs
 gtp_logs/
+
+# Generated dataset artifacts (keep data/*.py and DATASET_CARD.md tracked)
+data/raw/
+data/processed/*.h5
+data/processed/*.csv
+data/processed/shards/

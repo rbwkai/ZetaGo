@@ -17,7 +17,7 @@ Date: June 2026
 
 import random
 from pathlib import Path
-from go_board import GoBoard
+from engine import GoBoard
 from katago_gtp import KataGoConfig, KataGoError, KataGoGTP
 
 
@@ -42,9 +42,10 @@ def _discover_model_path() -> str:
     model_dirs = [PROJECT_ROOT / "models", PROJECT_ROOT / "katago" / "models"]
     for model_dir in model_dirs:
         if model_dir.exists():
-            models = sorted(model_dir.glob("*.bin.gz"))
-            if models:
-                return str(models[0])
+            for pattern in ("*.bin.gz", "*.txt.gz", "*.bin"):
+                models = sorted(model_dir.glob(pattern))
+                if models:
+                    return str(models[0])
     return ""
 
 
@@ -119,8 +120,8 @@ def get_human_move(board: GoBoard) -> bool:
             row, col = map(int, user_input.split(","))
             
             # Validate range
-            if not (0 <= row < GoBoard.BOARD_SIZE and 0 <= col < GoBoard.BOARD_SIZE):
-                print(f"Invalid coordinates! Board is 0-{GoBoard.BOARD_SIZE-1}.")
+            if not (0 <= row < board.N and 0 <= col < board.N):
+                print(f"Invalid coordinates! Board is 0-{board.N - 1}.")
                 continue
             
             # Attempt move
@@ -284,10 +285,10 @@ def play_game() -> None:
                 if not get_human_move(board):
                     continue
                 if use_katago and katago_client is not None:
-                    if board.last_move is None:
+                    if board.last_move_rc is None:
                         katago_client.play(human_player, None, None)
                     else:
-                        row, col = board.last_move
+                        row, col = board.last_move_rc
                         katago_client.play(human_player, row, col)
             else:
                 # Bot's turn

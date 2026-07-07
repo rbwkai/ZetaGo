@@ -1,221 +1,153 @@
-# ZetaGo: 7x7 Go Game Engine
+# ZetaGo — 7×7 Go: engine, GUI, and KataGo dataset
 
-A clean, production-ready Go Game engine built with Python and NumPy. Designed for Machine Learning applications and neural network integration using PyTorch.
+ZetaGo is a 7×7 Go project with three parts:
 
-## Features
+1. **A verified bitboard game engine** (`engine/`) — integer-bitboard board representation,
+   Zobrist **positional superko**, capture/suicide rules, and **Tromp-Taylor area scoring**,
+   developed test-first and cross-checked against KataGo.
+2. **A Pygame GUI** (`gui/`, `play_gui.py`) — play against another human, a random bot, or
+   **KataGo**, with a wood board, stone graphics, sounds, and live score.
+3. **A KataGo self-play dataset pipeline** (`data/`) — generate tens of thousands of 7×7
+   self-play games and extract `(board_state_tensor, move, outcome)` triples to HDF5 (+ CSV).
 
-- **Pure Python/NumPy Implementation:** Clean, readable, object-oriented code without bitboards or C++ extensions
-- **Complete Go Rules:**
-  - Liberty calculation and stone capture mechanics (flood-fill algorithm)
-  - Suicide rule (preventing immediate self-capture)
-  - Ko rule (preventing immediate board state repetition)
-  - Pass moves and consecutive pass game termination
-  - Tromp-Taylor scoring with komi (9.5 points for White)
-- **Terminal Game Play:** Simple ASCII-based interface to play against a random bot
-- **ML-Ready:** Designed as a foundation for neural network agents and reinforcement learning
+The engine is the single source of truth: the GUI plays through it and the dataset is built
+by replaying KataGo's games through it, so rules and encoding are consistent everywhere.
 
-## Tech Stack
+## Rules (identical in the engine, the GUI's KataGo opponent, and data generation)
 
-- **Python:** 3.10+
-- **NumPy:** For efficient board representation and state management
-- **PyTorch Integration:** Ready for future neural network agents
+| Rule | Value |
+|---|---|
+| Board / komi | 7×7, komi **9.5** (fixed) |
+| Ko | **positional superko** (no board position may repeat) |
+| Scoring | **area / Tromp-Taylor** (no dead-stone removal) |
+| Suicide | **illegal** (single- and multi-stone) |
 
-## Project Structure
+> This is Tromp-Taylor area scoring **except** multi-stone suicide is forbidden — pinned the
+> same way on both the engine and KataGo so training labels stay self-consistent.
+
+## Project structure
 
 ```
-ZetaGo/
-├── go_board.py            # Core game logic and rules
-├── play_terminal.py       # Terminal-based interactive gameplay
-├── katago_gtp.py          # KataGo GTP client wrapper
-├── KATAGO_INTEGRATION.md  # Notes for integrating KataGo
-├── README.md              # This file
-├── LICENSE                # Project license
-├── gtp_logs/              # KataGo GTP communication logs
-└── katago/                # KataGo binaries and models
-   ├── bin/
-   │   └── katago
-   └── models/
-      └── <neuralnet>.bin.gz
+engine/            Bitboard Go engine (single source of truth)
+  board.py           GoBoard: bitboards, captures, suicide, superko, play/score
+  masks.py           bit geometry: neighbours, edge-safe shifts, flood-fill
+  zobrist.py         Zobrist hashing (positional superko)
+  scoring.py         Tromp-Taylor area scoring
+  encode.py          NumPy tensors / arrays / move<->index helpers
+tests/             pytest suite (rules, captures, ko/superko, scoring, encoding, oracle)
+gui/               Pygame interface (theme, assets, board_view, widgets, app)
+play_gui.py        GUI entry point
+play_terminal.py   ASCII terminal play (Human vs Random / KataGo)
+katago_gtp.py      KataGo GTP subprocess client (used by GUI + terminal)
+data/              Dataset generation + extraction
+  build_dataset.py   replay SGFs -> HDF5 shards + train/val + DATASET_CARD.md
+  export_csv.py      HDF5 -> human-readable CSV
+  sgf_reader.py      KataGo .sgfs parser
+katago/
+  bin/               KataGo binary + bundled configs   (gitignored)
+  models/            neural nets                        (gitignored)
+  configs/           selfplay7x7_match.cfg, gui_gtp.cfg (tracked)
+requirements.txt   numpy, h5py, sgfmill, tqdm, pytest, pygame
 ```
 
-## Installation
+## Setup
 
-1. **Clone or download the project:**
-   ```bash
-   cd ZetaGo
-   ```
-
-2. **Create a virtual environment (recommended):**
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-3. **Install dependencies:**
-   ```bash
-   pip install numpy
-   ```
-
-4. **Optional - Install PyTorch for ML extensions:**
-   ```bash
-   pip install torch
-   ```
-
-## Usage
-
-### Playing in the Terminal
-
-Run the interactive game:
 ```bash
-python play_terminal.py
+python3 -m venv venv
+venv/bin/pip install -r requirements.txt
 ```
 
-When the game starts, choose:
-- `1` for the built-in random bot
-- `2` for KataGo (GTP engine)
+All commands below use `venv/bin/python` so they run inside that environment.
 
-### KataGo Engine Setup (Linux)
+## Play (GUI)
 
-1. Download KataGo from the [official KataGo releases](https://github.com/lightvector/KataGo/releases) and a `.bin.gz` neural net model from the [official KataGo training site](https://katagotraining.org/). Example: [Link](https://github.com/lightvector/KataGo/releases/download/v1.13.0/b18c384nbt-optimisticv13-s5971M.bin.gz)
-2. Place them in your project (example):
-   ```
-   ZetaGo/
-   ├── katago/
-   │   ├── bin/
-   │   │   ├── katago
-   │   │   └── default_gtp.cfg
-   │   └── models/
-   │       └── b18c384nbt-optimisticv13-s5971M.bin.gz
-   ```
-   Use a CPU build such as `katago-v1.16.5-eigenavx2-linux-x64.zip` if you do not have CUDA libraries installed. Extract it inside the katago/bin directory.
-3. Make KataGo executable:
-   ```bash
-   chmod +x ./katago/bin/katago
-   ```
-4. Optional benchmark/tuning check:
-   ```bash
-   ./katago/bin/katago benchmark -model ./katago/models/<NEURALNET>.bin.gz -config ./katago/bin/default_gtp.cfg
-   ```
-5. Launch the game and pick KataGo opponent:
-   ```bash
-   python play_terminal.py
-   ```
-6. Enter paths when prompted, for example:
-   - Executable: `./katago/bin/katago`
-   - Model: `./katago/models/<NEURALNET>.bin.gz`
-   - Config: `./katago/bin/default_gtp.cfg` (or leave blank)
-
-The game will then query KataGo for bot moves through GTP.
-
-**Game Instructions:**
-- Enter coordinates as `row,col` (e.g., `3,4` for row 3, column 4)
-- Rows and columns are indexed 0–6
-- Enter `pass` to pass a turn
-- The game ends when both players pass consecutively
-- Final score is displayed using Tromp-Taylor scoring with 9.5 komi
-
-**Example Session:**
-```
-  0 1 2 3 4 5 6
-0 . . . . . . .
-1 . . . . . . .
-2 . . . . . . .
-3 . . . . . . .
-4 . . . . . . .
-5 . . . . . . .
-6 . . . . . . .
-
-Black to move. Enter move (e.g., '3,3' or 'pass'): 3,3
-
-  0 1 2 3 4 5 6
-0 . . . . . . .
-1 . . . . . . .
-2 . . . . . . .
-3 . . . X . . .
-4 . . . . . . .
-5 . . . . . . .
-6 . . . . . . .
-
-White to move. Enter move (e.g., '3,3' or 'pass'): pass
+```bash
+venv/bin/python play_gui.py
 ```
 
-## Core Classes & Methods
+Pick an opponent (Human / Random / **KataGo**) and your colour, then **Start**. Click an
+intersection to play; use **Pass**, **Undo**, **Resign**, or **Menu**. A hover ghost stone
+shows where you'll play, the last move is ringed, and the side panel shows turn, captures,
+and a live area-score estimate. The KataGo opponent runs in a background thread so the UI
+never freezes.
 
-### `GoBoard` (go_board.py)
+Headless smoke test (no display needed):
 
-**Initialization:**
+```bash
+venv/bin/python play_gui.py --selftest
+```
+
+## Run the tests
+
+```bash
+venv/bin/python -m pytest -q                 # full suite
+venv/bin/python -m pytest -q -m "not oracle" # rules/scoring/encoding only
+venv/bin/python -m pytest -q -m oracle       # cross-check vs KataGo self-play data
+```
+
+The **oracle** tests replay real KataGo self-play games through the engine and assert every
+move is legal and that counted games agree on the winner — the strongest correctness gate.
+
+## Generate the dataset
+
+KataGo (CPU/Eigen build) and a small net are expected under `katago/`. Then:
+
+```bash
+# 1. Self-play game generation (writes .sgfs files)
+katago/bin/katago match -config katago/configs/selfplay7x7_match.cfg \
+    -sgf-output-dir data/raw/sgf -log-file data/raw/match.log
+
+# 2. Extract (state, move, outcome) triples to HDF5 (+ shards, train/val, dataset card)
+venv/bin/python -m data.build_dataset
+
+# 3. Optional: human-readable CSV export
+venv/bin/python -m data.export_csv
+```
+
+Outputs land in `data/processed/` (`train.h5`, `val.h5`, `shards/`, `train.csv`, `val.csv`,
+`sample.csv`) and are documented in `data/processed/DATASET_CARD.md`. The extractor is
+**append-safe and resumable**: re-running after generating more games only processes the new
+files. A non-zero "dropped" count is a tripwire that the engine and KataGo rules have diverged.
+
+### HDF5 schema
+
+| dataset | shape | dtype | meaning |
+|---|---|---|---|
+| `states`  | [N, 6, 7, 7] | uint8   | planes: current-player stones, opponent stones, side-to-move, empty, last move, legal moves |
+| `moves`   | [N] | int16   | policy target 0..48 (row*7+col), 49 = pass |
+| `values`  | [N] | int8    | outcome from side-to-move POV: +1 win / -1 loss / 0 jigo |
+| `margins` | [N] | float32 | score margin from side-to-move POV; NaN if resigned |
+| `players` | [N] | int8    | side to move (+1 Black / -1 White) |
+| `game_id` | [N] | uint32  | stable per-game id |
+| `move_no` | [N] | int16   | ply within the game |
+
+## KataGo setup
+
+A CPU (Eigen) KataGo build and a neural net go under `katago/bin/` and `katago/models/`
+(both gitignored). A small net such as `g170e-b10c128` keeps self-play and GUI responses fast
+on CPU; download it from the [KataGo releases](https://github.com/lightvector/KataGo/releases)
+or [katagotraining.org](https://katagotraining.org/). See `KATAGO_INTEGRATION.md` for the GTP
+client details. The committed configs in `katago/configs/` pin the rules above.
+
+## Engine API (quick reference)
+
 ```python
-board = GoBoard()  # Creates a 7x7 empty board, Black starts
+from engine import GoBoard, tromp_taylor_area, move_to_index
+
+b = GoBoard()              # 7x7, Black to move (GoBoard(n) for other sizes)
+b.play_move(3, 3)          # -> True/False (False = illegal, no mutation)
+b.pass_move()
+b.get_legal_moves()        # [(row, col), ...]
+b.get_final_score()        # (black, white, "Black"/"White"/"Tie")
+b.get_tensor()             # (6, 7, 7) uint8 ML tensor
+b.is_game_over()
 ```
-
-**Key Methods:**
-- `place_stone(row: int, col: int) -> bool` - Place a stone; returns True if valid
-- `pass_move() -> bool` - Pass the current turn
-- `get_legal_moves() -> list[tuple]` - Return all legal coordinates on the board
-- `is_game_over() -> bool` - Check if both players have passed
-- `calculate_score() -> tuple[float, float]` - Returns (Black score, White score)
-- `print_board()` - ASCII print of the current board state
-- `get_board_state() -> np.ndarray` - Return the raw board array
-
-**Board Representation:**
-- `1` = Black stone
-- `-1` = White stone
-- `0` = Empty intersection
-
-**State:**
-- `self.current_player` - Track whose turn it is (`1` or `-1`)
-- `self.passed_last_turn` - Track if the last move was a pass
-- `self.move_history` - Full history of board states for Ko rule
-
-### `GoEnv` Alias
-`GoEnv` is an alias for `GoBoard`, supporting both naming conventions.
-
-## Algorithm Details
-
-### Liberty & Capture (BFS Flood-Fill)
-When a stone is placed, the algorithm:
-1. Identifies all connected stones of the same color (BFS)
-2. Counts adjacent empty spaces (liberties)
-3. Removes opponent groups with 0 liberties
-4. Checks if the placed stone itself has liberties (suicide rule)
-
-### Ko Rule
-Prevents a move that would recreate the board state from exactly one turn prior. Simple but effective for 7x7 boards.
-
-### Tromp-Taylor Scoring
-- Count stones on board
-- Count empty regions controlled by one color (BFS from empty spaces)
-- White receives +9.5 komi (compensation for moving second)
-- Higher score wins
-
-## Design Decisions
-
-1. **NumPy Arrays:** Efficient for ML/neural network integration
-2. **Object-Oriented:** Clean encapsulation of game state and rules
-3. **No Bitboards:** Prioritizes readability over C-level performance; sufficient for 7x7
-4. **Flood-Fill Algorithm:** Standard, efficient approach for liberty calculation
-5. **Full Move History:** Enables Ko rule detection and future ML rollout/tree search
-6. **Type Hints:** Production-ready code with full type annotations
-
-## Future Enhancements
-
-- Alphanumeric coordinate system (A-G for columns)
-- Configurable board sizes (9x9, 19x19)
-- Minimax and Monte Carlo Tree Search (MCTS) bots
-- PyTorch neural network player integration
-- Game state serialization/deserialization
-- Elo rating system for bot battles
-
-## Contributing
-
-This is a student project for learning ML and Go game engines. Contributions are welcome!
 
 ## License
 
-Open source for educational purposes.
+MIT — see `LICENSE`.
 
 ## References
 
-- [American Go Association Rules](https://www.usgo.org/what-go)
-- [Tromp-Taylor Scoring](https://en.wikipedia.org/wiki/Scoring_in_Go#Tromp-Taylor_Scoring)
-- [Go on Wikipedia](https://en.wikipedia.org/wiki/Go_(game))
+- [KataGo](https://github.com/lightvector/KataGo) and [its rules](https://lightvector.github.io/KataGo/rules.html)
+- [Tromp-Taylor rules](https://tromp.github.io/go.html)
