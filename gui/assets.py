@@ -17,8 +17,12 @@ class Assets:
         self._wood_raw = pygame.image.load(os.path.join(IMG, "kaya.jpg")).convert()
         self.icon = self._try(lambda: pygame.image.load(
             os.path.join(ICO, "apple-touch-icon-180x180.png")).convert_alpha())
+        # A single stone-clack extracted from the OGS "floor-goban" audio
+        # sprite. The original .mp3 is a 6.5s sprite holding several clacks
+        # concatenated together, so playing it whole made the sound continue
+        # long after a single stone was placed.
         self.place_sound = self._try(lambda: pygame.mixer.Sound(
-            os.path.join(SND, "zz-un-floor-goban.v7.mp3")))
+            os.path.join(SND, "stone-place.wav")))
         if self.place_sound is not None:
             self.place_sound.set_volume(0.5)
         self.muted = False
