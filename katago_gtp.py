@@ -27,6 +27,8 @@ class KataGoConfig:
     config_path: Optional[str] = None
     board_size: int = 7
     komi: float = 9.5
+    # Optional `-override-config` key=value pairs (e.g. to pin rules / search depth).
+    overrides: Optional[dict] = None
 
 
 class KataGoGTP:
@@ -54,6 +56,9 @@ class KataGoGTP:
         cmd = [executable, "gtp", "-model", model]
         if config:
             cmd.extend(["-config", config])
+        if self.cfg.overrides:
+            pairs = ",".join(f"{k}={v}" for k, v in self.cfg.overrides.items())
+            cmd.extend(["-override-config", pairs])
 
         try:
             self._process = subprocess.Popen(
@@ -96,6 +101,12 @@ class KataGoGTP:
             self._process.kill()
 
         self._process = None
+
+    def reset(self) -> None:
+        """Clear KataGo's board (used to resync after an undo, before replaying moves)."""
+        self._send_and_expect_ok(f"boardsize {self.cfg.board_size}")
+        self._send_and_expect_ok(f"komi {self.cfg.komi}")
+        self._send_and_expect_ok("clear_board")
 
     def play(self, color: int, row: Optional[int], col: Optional[int]) -> None:
         """Send a played move to KataGo to keep state in sync."""

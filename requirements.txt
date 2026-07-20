@@ -1,0 +1,9 @@
+# ZetaGo-Obi Python dependencies
+# Install into the project venv:  venv/bin/pip install -r requirements.txt
+
+numpy>=1.26        # tensor export + dataset arrays (engine core itself is pure-python int bitboards)
+h5py>=3.10         # HDF5 dataset storage
+sgfmill>=1.1.1     # robust SGF parsing for KataGo self-play game records
+tqdm>=4.66         # progress bars for the extraction sweep
+pytest>=8.0        # TDD test suite
+pygame>=2.6        # GUI (use pygame-ce if wheels misbehave on Python 3.13)
