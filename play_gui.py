@@ -8,7 +8,9 @@ import argparse
 import os
 import sys
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+root_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, root_dir)
+sys.path.insert(0, os.path.join(root_dir, "environment"))
 
 
 def main():

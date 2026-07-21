@@ -7,7 +7,7 @@ import threading
 import pygame
 
 from engine import GoBoard, BLACK, WHITE
-from katago_gtp import KataGoConfig, KataGoGTP
+from katago.katago_gtp import KataGoConfig, KataGoGTP
 from . import theme
 from .assets import Assets
 from .board_view import BoardView

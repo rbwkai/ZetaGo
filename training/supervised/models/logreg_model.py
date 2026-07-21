@@ -24,7 +24,6 @@ class LogisticRegressionModel(SupervisedModel):
 
         self.move_model = LogisticRegression(
             max_iter=500,
-            multi_class="multinomial",
             solver="lbfgs",
             n_jobs=-1,
             random_state=seed,
@@ -32,7 +31,6 @@ class LogisticRegressionModel(SupervisedModel):
         # value modeled as a multinomial regressor here for simplicity
         self.value_model = LogisticRegression(
             max_iter=500,
-            multi_class="multinomial",
             solver="lbfgs",
             n_jobs=-1,
             random_state=seed,

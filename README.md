@@ -47,7 +47,7 @@ katago/
   bin/               KataGo binary + bundled configs   (gitignored)
   models/            neural nets                        (gitignored)
   configs/           selfplay7x7_match.cfg, gui_gtp.cfg (tracked)
-requirements.txt   numpy, h5py, sgfmill, tqdm, pytest, pygame
+requirements.txt   numpy, h5py, scikit-learn, sgfmill, tqdm, pytest, pygame, torch (optional)
 ```
 
 ## Setup
@@ -58,6 +58,23 @@ venv/bin/pip install -r requirements.txt
 ```
 
 All commands below use `venv/bin/python` so they run inside that environment.
+
+Quick baseline (fast, minimal deps)
+
+If you only want to run the small scikit-learn baselines (kNN, RF) and
+evaluate models on the existing HDF5 dataset, install a minimal set instead
+of the full requirements. This is faster to install and sufficient for most
+quick experiments.
+
+```bash
+python3 -m venv venv
+. venv/bin/activate
+pip install --upgrade pip
+pip install numpy h5py scikit-learn
+
+# run a quick kNN baseline on a small subset for speed
+python3 train_supervised.py --model knn --encodings 2 --max-train 2000 --max-val 500 --knn-k 11
+```
 
 ## Play (GUI)
 

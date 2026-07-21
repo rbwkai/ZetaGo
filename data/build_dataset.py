@@ -30,7 +30,9 @@ from functools import partial
 import h5py
 import numpy as np
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, root_dir)
+sys.path.insert(0, os.path.join(root_dir, "environment"))
 
 from engine import GoBoard                       # noqa: E402
 from data.sgf_reader import parse_record         # noqa: E402
