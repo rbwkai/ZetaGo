@@ -5,8 +5,8 @@ move-prediction pre-training and unsupervised position analysis.
 
 ## Source
 - **Engine:** KataGo v1.16.5 (Eigen/CPU, AVX2), self-play via the `match` subcommand
-- **Network:** `g170e-b10c128-s1141046784-d204142634.txt.gz`
-  - sha256: `3d8a24697ba25fe4da39af4c2b6bd405907b0ad8295322f5a550fa2d8fe4a2f4`
+- **Network:** `b18c384nbt-optimisticv13-s5971M.bin.gz`
+  - sha256: `4714cddd467d29fba4cb52964f5d324fc208c0528953694a7bbe21a75b332d5d`
 - **Search:** maxVisits = 16, numSearchThreads = 1
 - **Generated config:** `katago/configs/selfplay7x7_match.cfg`
 
@@ -23,10 +23,10 @@ move-prediction pre-training and unsupervised position analysis.
 
 ## Size
 - Games: **50,000**
-- Positions: **1,228,531**  (train **1,165,715**, val **62,816**)
+- Positions: **557,248**  (train **530,192**, val **27,056**)
 - Games dropped for rule mismatch (tripwire, should be 0): **0**
 - Games skipped (wrong size/komi): **0**
-- Created: 2026-06-08T17:14:33Z
+- Created: 2026-07-21T13:03:54Z
 
 ## Files
 - `train.h5`, `val.h5` (split by game via `crc32(file:line) % 20`)
