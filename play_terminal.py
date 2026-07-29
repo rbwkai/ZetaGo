@@ -15,10 +15,17 @@ Author: ML Go Engine Team
 Date: June 2026
 """
 
+import os
 import random
+import sys
 from pathlib import Path
+
+root_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, root_dir)
+sys.path.insert(0, os.path.join(root_dir, "environment"))
+
 from engine import GoBoard
-from katago_gtp import KataGoConfig, KataGoError, KataGoGTP
+from katago.katago_gtp import KataGoConfig, KataGoError, KataGoGTP
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent

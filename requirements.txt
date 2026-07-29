@@ -3,6 +3,8 @@
 
 numpy>=1.26        # tensor export + dataset arrays (engine core itself is pure-python int bitboards)
 h5py>=3.10         # HDF5 dataset storage
+scikit-learn>=1.5  # logistic regression, random forest, kNN baselines
+torch>=2.3         # CNN policy+value training (PyTorch) - optional for baselines
 sgfmill>=1.1.1     # robust SGF parsing for KataGo self-play game records
 tqdm>=4.66         # progress bars for the extraction sweep
 pytest>=8.0        # TDD test suite

@@ -161,7 +161,3 @@ data/raw/
 data/processed/*.h5
 data/processed/*.csv
 data/processed/shards/
-
-
-.claude/
-Docs/
