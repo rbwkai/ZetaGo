@@ -10,15 +10,18 @@ from .cnn_model import CNNModel
 from .knn_model import KNNModel
 from .logreg_model import LogisticRegressionModel
 from .random_forest_model import RandomForestModel
+from .svm_model import SVMModel
 
 
-def create_model(name: str, in_channels: int, args, device: str) -> SupervisedModel:
+def create_model(name: str, in_channels: int, args, device: str, seed: int) -> SupervisedModel:
     if name == "logreg":
-        return LogisticRegressionModel(seed=args.seed)
+        return LogisticRegressionModel(seed=seed)
     if name == "rf":
-        return RandomForestModel(n_estimators=args.rf_trees, seed=args.seed)
+        return RandomForestModel(n_estimators=args.rf_trees, seed=seed)
     if name == "knn":
         return KNNModel(k=args.knn_k)
+    if name == "svm":
+        return SVMModel(seed=seed, c=args.svm_c)
     if name == "cnn":
         from ..losses import WeightedPolicyValueLoss
 
@@ -28,8 +31,9 @@ def create_model(name: str, in_channels: int, args, device: str) -> SupervisedMo
             epochs=args.epochs,
             batch_size=args.batch_size,
             lr=args.lr,
-            seed=args.seed,
+            seed=seed,
             device=device,
             loss_fn=loss_fn,
+            value_scale=args.value_scale,
         )
     raise ValueError(f"unknown model: {name}")

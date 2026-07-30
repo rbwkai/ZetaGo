@@ -4,7 +4,7 @@ Each CSV row is one position. The board is reconstructed in absolute colours
 (``X`` = Black, ``O`` = White, ``.`` = empty) as seven 7-character rows joined by
 ``/`` so a person can read it directly, e.g. ``......./...XO../..XO.O./...`` .
 
-    venv/bin/python -m data.export_csv                       # train.h5+val.h5 -> .csv, plus sample
+    venv/bin/python -m data.export_csv                       # train/val/test.h5 -> .csv, plus sample
     venv/bin/python -m data.export_csv --in data/processed/val.h5 --out data/processed/val.csv
     venv/bin/python -m data.export_csv --in data/processed/train.h5 --out s.csv --limit 500
 """
@@ -81,10 +81,11 @@ def main():
         print(f"wrote {n:,} rows -> {out}")
         return
 
-    # Default: full train.csv + val.csv plus a small readable sample.
+    # Default: full train.csv + val.csv + test.csv plus a small readable sample.
     base = "data/processed"
     jobs = [
         (os.path.join(base, "val.h5"), os.path.join(base, "val.csv"), 0),
+        (os.path.join(base, "test.h5"), os.path.join(base, "test.csv"), 0),
         (os.path.join(base, "train.h5"), os.path.join(base, "sample.csv"), 500),
         (os.path.join(base, "train.h5"), os.path.join(base, "train.csv"), 0),
     ]

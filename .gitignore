@@ -156,6 +156,21 @@ katago/models/
 # GTP engine logs
 gtp_logs/
 
+# Phase 2 sweep outputs
+results/
+
+# LaTeX build artifacts (paper/) -- keep .tex/.bib/.cls/figures, not build output
+paper/*.pdf
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.log
+paper/*.out
+paper/*.synctex.gz
+paper/*.fls
+paper/*.fdb_latexmk
+paper/*.toc
+
 # Generated dataset artifacts (keep data/*.py and DATASET_CARD.md tracked)
 data/raw/
 data/processed/*.h5

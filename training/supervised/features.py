@@ -7,7 +7,15 @@ the HDF5 files) into model inputs for the three encodings used in experiments:
 
 - N=2: current-player stones, opponent stones
 - N=4: N=2 + liberties + turn indicator
-- N=7: N=4 + history t-1, history t-2, ko/capture history
+- N=7: N=4 + signed history t-1, signed history t-2, occupancy-change plane
+
+Feature definitions are frozen as implemented here (Phase 1 task 1.0a); the plan
+text (originally "N=4 = stones+turn+last move", "N=7 = +atari maps, +ko point")
+has been corrected to match, not the other way around. The history planes at
+t-1/t-2 are signed (+1 mover's stone, -1 opponent's stone, 0 empty) so that both
+players' stones are represented in every plane, rather than only the mover's
+own stones as in the earlier version of this module. The occupancy-change plane
+is a capture/placement diff, not a ko indicator, and is named accordingly.
 
 All functions operate on NumPy arrays and return NumPy arrays.
 """
@@ -81,11 +89,15 @@ def _history_planes(
     game_id: np.ndarray,
     move_no: np.ndarray,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    # Build history planes (t-1, t-2) and a simple ko/capture indicator plane.
+    # Build signed history planes (t-1, t-2), each +1/-1/0 for mover/opponent/empty
+    # so both players' stones are visible, plus an occupancy-change (capture/
+    # placement diff) plane. Not a ko indicator: it fires on every stone placement
+    # and every capture alike, with no way to distinguish a ko recapture from an
+    # ordinary move.
     n = len(players)
     h1 = np.zeros((n, BOARD, BOARD), dtype=np.float32)
     h2 = np.zeros((n, BOARD, BOARD), dtype=np.float32)
-    kcap = np.zeros((n, BOARD, BOARD), dtype=np.float32)
+    occ_change = np.zeros((n, BOARD, BOARD), dtype=np.float32)
 
     black_abs, white_abs = _absolute_bw(states, players)
     occ_abs = (black_abs | white_abs).astype(np.uint8)
@@ -101,13 +113,15 @@ def _history_planes(
         prev2_idx = pos_to_idx.get((gid, mn - 2))
 
         if prev_idx is not None:
-            h1[i] = black_abs[prev_idx] if p == 1 else white_abs[prev_idx]
-            kcap[i] = (occ_abs[i] != occ_abs[prev_idx]).astype(np.float32)
+            mover, opponent = (black_abs, white_abs) if p == 1 else (white_abs, black_abs)
+            h1[i] = mover[prev_idx].astype(np.float32) - opponent[prev_idx].astype(np.float32)
+            occ_change[i] = (occ_abs[i] != occ_abs[prev_idx]).astype(np.float32)
 
         if prev2_idx is not None:
-            h2[i] = black_abs[prev2_idx] if p == 1 else white_abs[prev2_idx]
+            mover, opponent = (black_abs, white_abs) if p == 1 else (white_abs, black_abs)
+            h2[i] = mover[prev2_idx].astype(np.float32) - opponent[prev2_idx].astype(np.float32)
 
-    return h1, h2, kcap
+    return h1, h2, occ_change
 
 
 def make_features(split: Dict[str, np.ndarray], encoding: int) -> np.ndarray:
@@ -128,12 +142,12 @@ def make_features(split: Dict[str, np.ndarray], encoding: int) -> np.ndarray:
     if encoding == 7:
         liberties = _liberty_plane(curr, opp)
         turn = states[:, 2]
-        h1, h2, kcap = _history_planes(
+        h1, h2, occ_change = _history_planes(
             split["states"],
             split["players"],
             split["game_id"],
             split["move_no"],
         )
-        return np.stack([curr, opp, liberties, turn, h1, h2, kcap], axis=1)
+        return np.stack([curr, opp, liberties, turn, h1, h2, occ_change], axis=1)
 
     raise ValueError(f"unsupported encoding N={encoding}")

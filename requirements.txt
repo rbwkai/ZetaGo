@@ -9,3 +9,4 @@ sgfmill>=1.1.1     # robust SGF parsing for KataGo self-play game records
 tqdm>=4.66         # progress bars for the extraction sweep
 pytest>=8.0        # TDD test suite
 pygame>=2.6        # GUI (use pygame-ce if wheels misbehave on Python 3.13)
+matplotlib>=3.8    # figure generation (class-distribution figure, EXECUTION_Phase1.md task 1.9)

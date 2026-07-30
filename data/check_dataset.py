@@ -1,9 +1,11 @@
-"""Acceptance gates for a freshly built train/val dataset.
+"""Acceptance gates for a freshly built train/val/test dataset.
 
 Ten checks from ``Docs/EXECUTION_Phase0.md`` Sec. 5 that must all pass before any
 model is trained on the dataset: they catch a repeat of the low-diversity /
 resignation-collapse / komi-filter failure modes that made the corpus this
-document replaces unusable.
+document replaces unusable. Three more (G11-G13) verify the Phase 1 task 1.2b
+fix: test must be carved from the same generation run as train/val, not a
+separately-generated run from a different regime (see ``Docs/DATASET.md`` §11).
 
 G10 (val rows whose exact board position also occurs somewhere in train) is
 reported, not enforced as pass/fail: this overlap is concentrated almost
@@ -32,7 +34,7 @@ regeneration, before trusting a build_dataset run's output.
 
 Run after ``python -m data.build_dataset``:
     venv/bin/python -m data.check_dataset
-    venv/bin/python -m data.check_dataset --train other/train.h5 --val other/val.h5
+    venv/bin/python -m data.check_dataset --train other/train.h5 --val other/val.h5 --test other/test.h5
 """
 
 import argparse
@@ -46,9 +48,36 @@ def _position_keys(h):
     return np.array([s.tobytes() for s in h["states"][:]], dtype=object)
 
 
-def run_gates(train_path: str, val_path: str) -> bool:
+def _median_game_length(h):
+    game_id = h["game_id"][:]
+    if len(game_id) == 0:
+        return 0.0
+    _, counts = np.unique(game_id, return_counts=True)
+    return float(np.median(counts))
+
+
+def _margin_std(h):
+    m = h["margins"][:]
+    m = m[~np.isnan(m)]
+    return float(np.std(m)) if len(m) else float("nan")
+
+
+def _side_to_move_baseline(h):
+    # "predict a win iff White is to move": players +1 Black, -1 White; values
+    # +1 win / -1 loss / 0 jigo from the side-to-move's perspective (see F2,
+    # Docs/DATASET.md §8/§9).
+    players = h["players"][:]
+    values = h["values"][:]
+    if len(values) == 0:
+        return float("nan")
+    pred = np.where(players == -1, 1, -1)
+    return float(np.mean(pred == values))
+
+
+def run_gates(train_path: str, val_path: str, test_path: str | None = None) -> bool:
     tr = h5py.File(train_path, "r")
     va = h5py.File(val_path, "r")
+    te = h5py.File(test_path, "r") if test_path else None
 
     tk, vk = _position_keys(tr), _position_keys(va)
     ts, vs = set(tk.tolist()), set(vk.tolist())
@@ -102,11 +131,44 @@ def run_gates(train_path: str, val_path: str) -> bool:
                 print(f"    ply {lo:>3}-{hi if hi < 10_000 else '+':<4}: "
                       f"{m.sum():>6,} val rows, overlap {100 * overlap_mask[m].mean():5.1f}%")
 
+    if te is not None:
+        test_games = set(te["game_id"][:].tolist())
+        train_test_overlap = len(train_games & test_games)
+        val_test_overlap = len(val_games & test_games)
+
+        val_med_ply, test_med_ply = _median_game_length(va), _median_game_length(te)
+        val_mstd, test_mstd = _margin_std(va), _margin_std(te)
+        val_stm, test_stm = _side_to_move_baseline(va), _side_to_move_baseline(te)
+
+        # 15% relative tolerance around val: generous enough for sampling noise at
+        # test's smaller size, tight enough to catch a regime mismatch like the one
+        # this gate was written to catch (test was 20 vs val's 27 median ply).
+        def _close(a, b, tol=0.15):
+            return abs(a - b) <= tol * max(abs(b), 1e-9)
+
+        test_checks = [
+            ("G11", "game overlap train/test", train_test_overlap, "== 0", train_test_overlap == 0),
+            ("G12", "game overlap val/test", val_test_overlap, "== 0", val_test_overlap == 0),
+            ("G13a", "test median game length vs val", f"{test_med_ply:.1f} (val {val_med_ply:.1f})",
+             "within 15%", _close(test_med_ply, val_med_ply)),
+            ("G13b", "test margin std vs val", f"{test_mstd:.2f} (val {val_mstd:.2f})",
+             "within 15%", _close(test_mstd, val_mstd)),
+            ("G13c", "test side-to-move baseline vs val", f"{test_stm:.4f} (val {val_stm:.4f})",
+             "within 15%", _close(test_stm, val_stm)),
+        ]
+        print(f"\ntest: {len(te['moves']):,} rows, {len(test_games):,} games\n")
+        for gid, name, value, req, ok in test_checks:
+            status = "PASS" if ok else "FAIL"
+            all_pass &= ok
+            print(f"{gid:<5}{name:<32}{str(value):<24}{req:<28}{status}")
+
     print()
     print("ALL BLOCKING GATES PASSED — safe to proceed to training." if all_pass
           else "GATES FAILED — do not train on this dataset. See Docs/EXECUTION_Phase0.md.")
     tr.close()
     va.close()
+    if te is not None:
+        te.close()
     return all_pass
 
 
@@ -114,8 +176,9 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--train", default="data/processed/train.h5")
     ap.add_argument("--val", default="data/processed/val.h5")
+    ap.add_argument("--test", default="data/processed/test.h5")
     args = ap.parse_args()
-    ok = run_gates(args.train, args.val)
+    ok = run_gates(args.train, args.val, args.test)
     sys.exit(0 if ok else 1)
 
 

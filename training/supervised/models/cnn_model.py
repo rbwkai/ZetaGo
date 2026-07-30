@@ -3,6 +3,13 @@
 This module wraps a small convnet and provides `fit` and `predict` methods so
 it can be used interchangeably with NumPy baselines. PyTorch is optional and
 only required when the `cnn` model is selected.
+
+The value head predicts the score margin, not win/loss (EXECUTION_Phase1.md
+task 1.1b): margins span +-58.5 with std ~16.3, so `fit`/`predict` divide by
+`value_scale` internally before feeding the combined policy+value loss (this
+keeps the value MSE term from swamping the policy cross-entropy term) and
+multiply back by `value_scale` on the way out, so callers always see raw
+margin units, same as every other model in this package.
 """
 
 from __future__ import annotations
@@ -35,6 +42,7 @@ class CNNModel(SupervisedModel):
         seed: int = 42,
         device: str = "cpu",
         loss_fn: LossBase | None = None,
+        value_scale: float = 15.0,
     ):
         try:
             import torch
@@ -55,6 +63,7 @@ class CNNModel(SupervisedModel):
         self.lr = lr
         self.device = device
         self.seed = seed
+        self.value_scale = value_scale
         self.loss_fn = loss_fn or WeightedPolicyValueLoss(0.5)
 
         # Seed before construction: weight initialisation happens inside _build_model,
@@ -93,7 +102,8 @@ class CNNModel(SupervisedModel):
                     nn.Linear(16 * b * b, 64),
                     nn.ReLU(inplace=True),
                     nn.Linear(64, 1),
-                    nn.Tanh(),
+                    # No Tanh: the value head regresses a normalised margin that
+                    # can exceed +-1 (raw margins span +-58.5); Tanh would clip it.
                 )
 
             def forward(self, x):
@@ -107,9 +117,14 @@ class CNNModel(SupervisedModel):
 
         class TensorSplit(self.Dataset):
             def __init__(self):
-                self.x = torch.from_numpy(x.astype(np.float32))
-                self.y_move = torch.from_numpy(y_move.astype(np.int64))
-                self.y_value = torch.from_numpy(y_value.astype(np.float32))
+                # np.asarray is a no-op when the dtype already matches, unlike
+                # ndarray.astype which copies unconditionally -- at N=7 full volume
+                # that second copy doubles 4.79 GB to 9.58 GB and OOMs (see F4,
+                # EXECUTION_Phase1.md task 1.2). make_features already returns
+                # float32, so this is always the fast path.
+                self.x = torch.from_numpy(np.asarray(x, dtype=np.float32))
+                self.y_move = torch.from_numpy(np.asarray(y_move, dtype=np.int64))
+                self.y_value = torch.from_numpy(np.asarray(y_value, dtype=np.float32))
 
             def __len__(self):
                 return len(self.y_move)
@@ -124,7 +139,8 @@ class CNNModel(SupervisedModel):
         torch.manual_seed(self.seed)
         np.random.seed(self.seed)
 
-        ds = self._make_dataset(x_train, y_move_train, y_value_train)
+        y_value_scaled = np.asarray(y_value_train, dtype=np.float32) / self.value_scale
+        ds = self._make_dataset(x_train, y_move_train, y_value_scaled)
         dl = self.DataLoader(ds, batch_size=self.batch_size, shuffle=True, num_workers=0)
 
         self.model.train()
@@ -164,5 +180,5 @@ class CNNModel(SupervisedModel):
 
         move_logits = np.concatenate(all_move_logits, axis=0)
         move_proba = softmax_np(move_logits)
-        value_pred = np.concatenate(all_value_pred, axis=0).astype(np.float32)
+        value_pred = np.concatenate(all_value_pred, axis=0).astype(np.float32) * self.value_scale
         return move_proba, value_pred
