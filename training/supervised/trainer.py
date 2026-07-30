@@ -19,7 +19,6 @@ import time
 from typing import List
 
 import numpy as np
-import hashlib
 
 from .data import load_split, subsample
 from .features import make_features
@@ -56,7 +55,6 @@ def parse_args() -> argparse.Namespace:
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--out-csv", default="results/supervised_track_a_metrics.csv")
     ap.add_argument("--out-json", default="results/supervised_track_a_metrics.json")
-    ap.add_argument("--dedupe-val", action="store_true", default=True, help="drop val positions that exactly match any train position (by flattened hash)")
     return ap.parse_args()
 
 
@@ -162,92 +160,10 @@ def main() -> None:
         print(f"\nBuilding features for N={enc}...")
         x_train = make_features(train, enc)
         x_val = make_features(val, enc)
-        # Extract targets and run lightweight diagnostics to catch common dataset leaks early.
         y_move_train = train["moves"]
         y_move_val = val["moves"]
         y_value_train = train["values"]
         y_value_val = val["values"]
-
-        # Run lightweight diagnostics to catch common dataset leaks early.
-        def _run_diagnostics(enc, xtr, xv, ytr, yv, tr_split, val_split):
-            print(f"[diag] running diagnostics for encoding={enc} on {len(ytr):,} train rows and {len(yv):,} val rows")
-            # Basic target checks
-            u_tr, c_tr = np.unique(ytr, return_counts=True)
-            u_val, c_val = np.unique(yv, return_counts=True)
-            print(f"[diag] train unique moves: {len(u_tr)} (sample: {u_tr[:5].tolist()})")
-            print(f"[diag] val   unique moves: {len(u_val)} (sample: {u_val[:5].tolist()})")
-
-            if len(u_tr) <= 1:
-                print("[diag][ERROR] train targets appear constant or degenerate")
-
-            # Check for accidental column-wise leakage: if any flattened feature column
-            # equals the target vector for many rows, that's strong evidence of leakage.
-            Xf = xtr.reshape(len(xtr), -1)
-            ncols = Xf.shape[1]
-            # check a few metadata arrays for exact column matches
-            for name, arr in (('moves', ytr), ('move_no', tr_split['move_no']), ('game_id', tr_split['game_id'])):
-                arr = arr.astype(Xf.dtype)
-                # compute fraction of rows where column equals target per column
-                # avoid allocating huge intermediate by computing in blocks if needed
-                matches = (Xf == arr[:, None])
-                col_frac = matches.sum(axis=0) / float(len(arr))
-                best_idx = int(col_frac.argmax())
-                best_frac = float(col_frac[best_idx])
-                if best_frac > 0.9:
-                    print(f"[diag][ERROR] column {best_idx} in flattened features matches '{name}' for {best_frac*100:.2f}% of rows (likely leakage)")
-                elif best_frac > 0.01:
-                    # map flattened column to (plane,row,col) when shape is canonical
-                    plane = None
-                    row = col = None
-                    try:
-                        per_plane = xtr.shape[1] * xtr.shape[2] * xtr.shape[3]
-                    except Exception:
-                        per_plane = None
-                    if Xf.shape[1] and xtr.ndim == 4:
-                        C = xtr.shape[1]
-                        plane_size = xtr.shape[2] * xtr.shape[3]
-                        plane = best_idx // plane_size
-                        rem = best_idx % plane_size
-                        row = rem // xtr.shape[3]
-                        col = rem % xtr.shape[3]
-                        print(f"[diag][WARN] best match for '{name}' is column {best_idx} (plane={plane}, r={row}, c={col}) with {best_frac*100:.2f}% equality — investigate correlation/leakage")
-                    else:
-                        print(f"[diag][WARN] best match for '{name}' is column {best_idx} with {best_frac*100:.2f}% equality — investigate correlation/leakage")
-
-            # Check for exact duplicate flattened positions between train and val
-            def _hash_rows(A):
-                return np.array([hashlib.sha1(r.tobytes()).hexdigest() for r in A])
-
-            try:
-                htr = _hash_rows(Xf)
-                hv = _hash_rows(xv.reshape(len(xv), -1))
-                inter = np.intersect1d(htr, hv)
-                if len(inter) > 0:
-                    print(f"[diag][WARN] found {len(inter):,} exact duplicate positions between train and val (possible contamination)")
-            except Exception:
-                # Hashing may be expensive for very large datasets; ignore failures
-                pass
-
-        _run_diagnostics(enc, x_train, x_val, y_move_train, y_move_val, train, val)
-
-        # Optionally drop any validation positions that exactly match a train position
-        if args.dedupe_val:
-            try:
-                htr = np.array([hashlib.sha1(r.tobytes()).hexdigest() for r in x_train.reshape(len(x_train), -1)])
-                hv = np.array([hashlib.sha1(r.tobytes()).hexdigest() for r in x_val.reshape(len(x_val), -1)])
-                keep_mask = ~np.isin(hv, htr)
-                removed = int((~keep_mask).sum())
-                if removed:
-                    print(f"[diag] --dedupe-val: removed {removed:,} val positions that matched train positions")
-                x_val = x_val[keep_mask]
-                y_move_val = y_move_val[keep_mask]
-                y_value_val = y_value_val[keep_mask]
-                # also update val metadata dict slices so downstream code (if any) can access them
-                for k in ("players", "game_id", "move_no", "margins"):
-                    if k in val:
-                        val[k] = val[k][keep_mask]
-            except Exception:
-                print("[diag] --dedupe-val: hashing failed or OOM; skipping dedupe")
 
         for name in names:
             print(f"Training {name}...")

@@ -188,46 +188,42 @@ def _make_output(path, n):
     return h
 
 
-def merge_shards(out_dir, meta):
+def merge_shards(out_dir, meta, sgf_dir):
+    """Concatenate every shard into train.h5 / val.h5.
+
+    No position-level deduplication: the train/val split is already correct at the
+    game level (crc32(file:line) % VAL_MOD), and position overlap across distinct
+    self-play games is normal opening-book structure, not leakage. Filtering it out
+    (as an earlier revision did, matching a validation position's SHA1 against every
+    train position) silently destroyed the validation set when the corpus was
+    low-diversity, and gives each feature encoding a *different* val subset once
+    re-applied per experiment -- breaking the identical-test-set requirement the
+    Track A factorial depends on. Overlap is instead measured and reported (see
+    EXECUTION_Phase0.md acceptance gates) rather than deleted.
+
+    Only merges shards whose source .sgfs file is still present in ``sgf_dir``: an
+    orphan shard (source deleted/replaced) would otherwise silently blend two
+    different generation runs into one dataset.
+    """
     shard_paths = sorted(glob.glob(os.path.join(out_dir, "shards", "*.h5")))
-    # Two-pass merge to optionally deduplicate validation positions that
-    # exactly match any train position (by flattened state bytes). First pass
-    # collects all train-position hashes; second pass writes train and only
-    # those val positions whose hash is not in the train set.
-    n_pos = sum(int(h5py.File(p).attrs["n_pos"]) for p in shard_paths)
-    # count original val positions
-    n_val_orig = sum(int(h5py.File(p).attrs["n_val_pos"]) for p in shard_paths)
+    live = {os.path.basename(p) + ".h5" for p in glob.glob(os.path.join(sgf_dir, "*.sgfs"))}
+    orphans = [p for p in shard_paths if os.path.basename(p) not in live]
+    if orphans:
+        raise SystemExit(
+            f"{len(orphans)} orphan shard(s) have no matching .sgfs in {sgf_dir} and "
+            "would silently blend two different corpora into one dataset:\n"
+            + "\n".join("  " + os.path.basename(p) for p in orphans[:10])
+            + "\nMove or delete them from data/processed/shards/ before merging "
+              "(see EXECUTION_Phase0.md)."
+        )
 
-    # First pass: gather hashes of all train positions
-    train_hashes = set()
-    n_train = 0
-    for sp in shard_paths:
-        with h5py.File(sp, "r") as h:
-            if int(h.attrs["n_pos"]) == 0:
-                continue
-            isv = h["is_val"][:].astype(bool)
-            states = h["states"][:]
-            # iterate train positions (isv == False)
-            for st in states[~isv]:
-                train_hashes.add(hashlib.sha1(st.ravel().tobytes()).hexdigest())
-            n_train += int((~isv).sum())
-
-    # Determine how many val positions will be kept (not duplicated in train)
-    n_val_kept = 0
-    for sp in shard_paths:
-        with h5py.File(sp, "r") as h:
-            if int(h.attrs["n_pos"]) == 0:
-                continue
-            isv = h["is_val"][:].astype(bool)
-            states = h["states"][:]
-            for st in states[isv]:
-                if hashlib.sha1(st.ravel().tobytes()).hexdigest() not in train_hashes:
-                    n_val_kept += 1
+    n_train = sum(int(h5py.File(p).attrs["n_pos"]) - int(h5py.File(p).attrs["n_val_pos"])
+                  for p in shard_paths)
+    n_val = sum(int(h5py.File(p).attrs["n_val_pos"]) for p in shard_paths)
 
     train = _make_output(os.path.join(out_dir, "train.h5"), n_train)
-    val = _make_output(os.path.join(out_dir, "val.h5"), n_val_kept)
+    val = _make_output(os.path.join(out_dir, "val.h5"), n_val)
     ti = vi = 0
-    removed_val = 0
     for sp in shard_paths:
         with h5py.File(sp, "r") as h:
             if int(h.attrs["n_pos"]) == 0:
@@ -239,39 +235,16 @@ def merge_shards(out_dir, meta):
                 if ntr:
                     train[name][ti:ti + ntr] = data[~isv]
                 if nva:
-                    # filter val rows that duplicate any train position
-                    kept_idx = []
-                    for i, st in enumerate(data[isv]):
-                        hsh = hashlib.sha1(st.ravel().tobytes()).hexdigest()
-                        if hsh in train_hashes:
-                            removed_val += 1
-                            continue
-                        kept_idx.append(i)
-                    if kept_idx:
-                        # select the kept rows from the val block
-                        val_block = data[isv][kept_idx]
-                        val[name][vi:vi + len(val_block)] = val_block
+                    val[name][vi:vi + nva] = data[isv]
             ti += ntr
-            # advance val write pointer by number actually written from this shard
-            # recompute kept count for this shard to update vi
-            if nva:
-                # recount kept for this shard
-                states = h["states"][:]
-                kept = 0
-                for st in states[isv]:
-                    if hashlib.sha1(st.ravel().tobytes()).hexdigest() not in train_hashes:
-                        kept += 1
-                vi += kept
+            vi += nva
 
-    for h, n in ((train, n_train), (val, n_val_kept),):
+    for h, n in ((train, n_train), (val, n_val)):
         for k, v in meta.items():
             h.attrs[k] = v
         h.attrs["n_positions"] = n
-        # record dedupe stats
-        h.attrs["n_val_orig"] = n_val_orig
-        h.attrs["n_val_removed_duplicates"] = removed_val
         h.close()
-    return n_train, n_val_kept
+    return n_train, n_val
 
 
 # ---------------------------------------------------------------------------
@@ -356,7 +329,6 @@ move-prediction pre-training and unsupervised position analysis.
 
 ## Files
 - `train.h5`, `val.h5` (split by game via `crc32(file:line) % {meta['val_split_mod']}`)
-- `train.h5`, `val.h5` (split by game via `crc32(file:line) % {meta['val_split_mod']}`; validation positions that exactly match any train position are removed)
 - `shards/*.h5` — one shard per source `.sgfs` file (append-safe, resumable)
 - `train.csv`, `val.csv`, `sample.csv` — human-readable export (board as X/O/. rows joined
   by `/`, move as `row,col`); regenerate with `venv/bin/python -m data.export_csv`
@@ -421,7 +393,7 @@ def main():
 
     print("Merging shards -> train.h5 / val.h5 ...")
     meta = build_metadata(totals, rules)
-    n_train, n_val = merge_shards(args.out_dir, meta)
+    n_train, n_val = merge_shards(args.out_dir, meta, args.sgf_dir)
     write_dataset_card(args.out_dir, meta, n_train, n_val)
 
     print("\n=== DONE ===")

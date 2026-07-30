@@ -57,6 +57,10 @@ class CNNModel(SupervisedModel):
         self.seed = seed
         self.loss_fn = loss_fn or WeightedPolicyValueLoss(0.5)
 
+        # Seed before construction: weight initialisation happens inside _build_model,
+        # so seeding only in fit() (as before) left init unseeded and made runs at the
+        # same --seed non-reproducible, invalidating the multi-seed design.
+        torch.manual_seed(seed)
         self.model = self._build_model(in_channels, hidden).to(device)
         self.opt = torch.optim.Adam(self.model.parameters(), lr=lr)
 
