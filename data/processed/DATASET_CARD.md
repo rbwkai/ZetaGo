@@ -5,8 +5,8 @@ move-prediction pre-training and unsupervised position analysis.
 
 ## Source
 - **Engine:** KataGo v1.16.5 (Eigen/CPU, AVX2), self-play via the `match` subcommand
-- **Network:** `b18c384nbt-optimisticv13-s5971M.bin.gz`
-  - sha256: `4714cddd467d29fba4cb52964f5d324fc208c0528953694a7bbe21a75b332d5d`
+- **Network:** `g170e-b10c128-s1141046784-d204142634.txt.gz`
+  - sha256: `3d8a24697ba25fe4da39af4c2b6bd405907b0ad8295322f5a550fa2d8fe4a2f4`
 - **Search:** maxVisits = 16, numSearchThreads = 1
 - **Generated config:** `katago/configs/selfplay7x7_match.cfg`
 
@@ -22,17 +22,19 @@ move-prediction pre-training and unsupervised position analysis.
 > matched on both the engine and KataGo so the labels are self-consistent.
 
 ## Size
-- Games: **50,000**
-- Positions: **557,248**  (train **530,192**, val **27,056**)
+- Games: **120,000**
+- Positions: **3,677,092**  (train **3,310,156**, val **184,834**, test **182,102**)
 - Games dropped for rule mismatch (tripwire, should be 0): **0**
 - Games skipped (wrong size/komi): **0**
-- Created: 2026-07-21T13:03:54Z
+- Created: 2026-07-30T14:50:01Z
 
 ## Files
-- `train.h5`, `val.h5` (split by game via `crc32(file:line) % 20`)
+- `train.h5`, `val.h5`, `test.h5` — split by game via `crc32(file:line) % 20`
+  (`== 0` val, `== 1` test, else train). All three splits are carved from the same
+  generation run, so they share one regime; see `Docs/DATASET.md` §11.
 - `shards/*.h5` — one shard per source `.sgfs` file (append-safe, resumable)
-- `train.csv`, `val.csv`, `sample.csv` — human-readable export (board as X/O/. rows joined
-  by `/`, move as `row,col`); regenerate with `venv/bin/python -m data.export_csv`
+- `train.csv`, `val.csv`, `test.csv`, `sample.csv` — human-readable export (board as X/O/.
+  rows joined by `/`, move as `row,col`); regenerate with `venv/bin/python -m data.export_csv`
 
 ## HDF5 schema
 | dataset | shape | dtype | meaning |

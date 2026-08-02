@@ -1,7 +1,9 @@
-"""Logistic regression baseline using scikit-learn.
+"""Logistic regression + Ridge baseline using scikit-learn.
 
-This thin wrapper trains two multinomial logistic regression models: one for
-policy (predicting a move index) and one for value. Scikit-learn is an
+This thin wrapper trains a multinomial logistic regression model for policy
+(predicting a move index) and a Ridge regressor for value (the score margin,
+per EXECUTION_Phase1.md task 1.1b -- value is a continuous regression target,
+not a class, so a classifier is the wrong tool here). Scikit-learn is an
 optional dependency for the project; if it's not installed this model will
 raise at construction time.
 """
@@ -18,23 +20,16 @@ class LogisticRegressionModel(SupervisedModel):
 
     def __init__(self, seed: int = 42):
         try:
-            from sklearn.linear_model import LogisticRegression
+            from sklearn.linear_model import LogisticRegression, Ridge
         except Exception as exc:
             raise RuntimeError("scikit-learn is required for logistic regression") from exc
 
         self.move_model = LogisticRegression(
             max_iter=500,
             solver="lbfgs",
-            n_jobs=-1,
             random_state=seed,
         )
-        # value modeled as a multinomial regressor here for simplicity
-        self.value_model = LogisticRegression(
-            max_iter=500,
-            solver="lbfgs",
-            n_jobs=-1,
-            random_state=seed,
-        )
+        self.value_model = Ridge(random_state=seed)
 
     def fit(self, x_train: np.ndarray, y_move_train: np.ndarray, y_value_train: np.ndarray) -> None:
         self.move_model.fit(x_train, y_move_train)

@@ -1,0 +1,26 @@
+{
+  "val": {
+    "n": 184834,
+    "both_right": 160105,
+    "both_wrong": 15904,
+    "a_right_b_wrong": 6986,
+    "a_wrong_b_right": 1839,
+    "n_discordant": 8825,
+    "p_value": 0.0,
+    "split": "val",
+    "cnn_top1": 0.9040057565166582,
+    "rf_top1": 0.8761591482086629
+  },
+  "test": {
+    "n": 182102,
+    "both_right": 157603,
+    "both_wrong": 15652,
+    "a_right_b_wrong": 7130,
+    "a_wrong_b_right": 1717,
+    "n_discordant": 8847,
+    "p_value": 0.0,
+    "split": "test",
+    "cnn_top1": 0.9046193891335625,
+    "rf_top1": 0.8748942900132892
+  }
+}

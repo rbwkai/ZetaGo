@@ -9,9 +9,15 @@ Layout (append-safe & resumable):
   * one shard ``data/processed/shards/<file>.h5`` per source ``.sgfs`` file. A new
     self-play run writes new files = new shards; existing shards are untouched and
     skipped on re-run unless ``--force``.
-  * ``game_id`` and the train/val split are derived from a stable hash of (file, line),
-    so adding data later never renumbers or re-splits existing games.
-  * a final merge concatenates shards into ``train.h5`` / ``val.h5``.
+  * ``game_id`` and the train/val/test split are derived from a stable hash of
+    (file, line), so adding data later never renumbers or re-splits existing games.
+  * a final merge concatenates shards into ``train.h5`` / ``val.h5`` / ``test.h5``.
+
+All three splits are carved from the same generation run (see EXECUTION_Phase1.md
+task 1.2b): an earlier version sealed the test set from a separately-generated
+5,000-game run, which turned out to come from a different regime (shorter games,
+lower margin variance) and was not comparable to train/val. Splitting one run
+three ways instead removes that mismatch by construction.
 
 Run from the repo root:
     venv/bin/python -m data.build_dataset
@@ -41,7 +47,8 @@ BOARD_SIZE = 7
 KOMI = 9.5
 PASS_INDEX = BOARD_SIZE * BOARD_SIZE              # 49
 N_PLANES = 6
-VAL_MOD = 20                                      # ~5% of games go to validation
+SPLIT_MOD = 20                                    # key % SPLIT_MOD: 0 -> val, 1 -> test, else train
+SPLIT_NAMES = ("train", "val", "test")
 
 SGF_DIR = "data/raw/sgf"
 OUT_DIR = "data/processed"
@@ -88,10 +95,11 @@ def process_file(path, out_dir=SHARD_DIR, force=False):
             return {"file": basename, "reused": True, "n_pos": int(h.attrs["n_pos"]),
                     "n_games": int(h.attrs["n_games"]), "n_dropped": int(h.attrs["n_dropped"]),
                     "n_skip_meta": int(h.attrs["n_skip_meta"]),
-                    "n_val_pos": int(h.attrs["n_val_pos"]), "rules": h.attrs.get("rules", "")}
+                    "n_val_pos": int(h.attrs["n_val_pos"]), "n_test_pos": int(h.attrs["n_test_pos"]),
+                    "rules": h.attrs.get("rules", "")}
 
     states, moves, values, margins = [], [], [], []
-    players, game_ids, move_nos, is_val = [], [], [], []
+    players, game_ids, move_nos, split = [], [], [], []
     n_games = n_dropped = n_skip_meta = 0
     rules_seen = ""
 
@@ -108,7 +116,8 @@ def process_file(path, out_dir=SHARD_DIR, force=False):
                 rules_seen = game.rules
 
             key = _stable_key(basename, line_no)
-            val_flag = 1 if (key % VAL_MOD == 0) else 0
+            mod = key % SPLIT_MOD
+            split_flag = 1 if mod == 0 else (2 if mod == 1 else 0)  # 0 train, 1 val, 2 test
             margin_black = _parse_margin(game.result)
 
             board = GoBoard(n=BOARD_SIZE, komi=KOMI)
@@ -134,20 +143,22 @@ def process_file(path, out_dir=SHARD_DIR, force=False):
                 else:
                     value = 1 if p == game.winner else -1
                 margin_pov = (margin_black * p) if margin_black is not None else np.nan
-                rows.append((state, move_idx, value, margin_pov, p, key, board.move_number - 1, val_flag))
+                rows.append((state, move_idx, value, margin_pov, p, key, board.move_number - 1, split_flag))
 
             if not ok:
                 n_dropped += 1
                 continue
             n_games += 1
-            for st, mv, vl, mg, pl, gid, mn, vf in rows:
+            for st, mv, vl, mg, pl, gid, mn, sf in rows:
                 states.append(st); moves.append(mv); values.append(vl); margins.append(mg)
-                players.append(pl); game_ids.append(gid); move_nos.append(mn); is_val.append(vf)
+                players.append(pl); game_ids.append(gid); move_nos.append(mn); split.append(sf)
 
     n_pos = len(states)
     states_arr = (np.stack(states).astype(np.uint8) if n_pos
                   else np.zeros((0, N_PLANES, BOARD_SIZE, BOARD_SIZE), np.uint8))
-    n_val_pos = int(np.sum(is_val)) if n_pos else 0
+    split_arr = np.asarray(split, np.uint8)
+    n_val_pos = int(np.sum(split_arr == 1)) if n_pos else 0
+    n_test_pos = int(np.sum(split_arr == 2)) if n_pos else 0
 
     os.makedirs(out_dir, exist_ok=True)
     with h5py.File(shard_path, "w") as h5:
@@ -161,17 +172,18 @@ def process_file(path, out_dir=SHARD_DIR, force=False):
         h5.create_dataset("players", data=np.asarray(players, np.int8))
         h5.create_dataset("game_id", data=np.asarray(game_ids, np.uint32))
         h5.create_dataset("move_no", data=np.asarray(move_nos, np.int16))
-        h5.create_dataset("is_val", data=np.asarray(is_val, np.uint8))
+        h5.create_dataset("split", data=split_arr)
         h5.attrs["n_pos"] = n_pos
         h5.attrs["n_games"] = n_games
         h5.attrs["n_dropped"] = n_dropped
         h5.attrs["n_skip_meta"] = n_skip_meta
         h5.attrs["n_val_pos"] = n_val_pos
+        h5.attrs["n_test_pos"] = n_test_pos
         h5.attrs["rules"] = rules_seen
 
     return {"file": basename, "reused": False, "n_pos": n_pos, "n_games": n_games,
             "n_dropped": n_dropped, "n_skip_meta": n_skip_meta, "n_val_pos": n_val_pos,
-            "rules": rules_seen}
+            "n_test_pos": n_test_pos, "rules": rules_seen}
 
 
 # ---------------------------------------------------------------------------
@@ -188,90 +200,72 @@ def _make_output(path, n):
     return h
 
 
-def merge_shards(out_dir, meta):
+def merge_shards(out_dir, meta, sgf_dir):
+    """Concatenate every shard into train.h5 / val.h5 / test.h5.
+
+    No position-level deduplication: the split is already correct at the game
+    level (crc32(file:line) % SPLIT_MOD), and position overlap across distinct
+    self-play games is normal opening-book structure, not leakage. Filtering it out
+    (as an earlier revision did, matching a validation position's SHA1 against every
+    train position) silently destroyed the validation set when the corpus was
+    low-diversity, and gives each feature encoding a *different* val subset once
+    re-applied per experiment -- breaking the identical-test-set requirement the
+    Track A factorial depends on. Overlap is instead measured and reported (see
+    EXECUTION_Phase0.md acceptance gates) rather than deleted.
+
+    All three splits are carved from the same shard set (see module docstring and
+    EXECUTION_Phase1.md task 1.2b): an earlier version sealed test from a
+    separately-generated run that turned out to be from a different regime.
+
+    Only merges shards whose source .sgfs file is still present in ``sgf_dir``: an
+    orphan shard (source deleted/replaced) would otherwise silently blend two
+    different generation runs into one dataset.
+    """
     shard_paths = sorted(glob.glob(os.path.join(out_dir, "shards", "*.h5")))
-    # Two-pass merge to optionally deduplicate validation positions that
-    # exactly match any train position (by flattened state bytes). First pass
-    # collects all train-position hashes; second pass writes train and only
-    # those val positions whose hash is not in the train set.
-    n_pos = sum(int(h5py.File(p).attrs["n_pos"]) for p in shard_paths)
-    # count original val positions
-    n_val_orig = sum(int(h5py.File(p).attrs["n_val_pos"]) for p in shard_paths)
+    live = {os.path.basename(p) + ".h5" for p in glob.glob(os.path.join(sgf_dir, "*.sgfs"))}
+    orphans = [p for p in shard_paths if os.path.basename(p) not in live]
+    if orphans:
+        raise SystemExit(
+            f"{len(orphans)} orphan shard(s) have no matching .sgfs in {sgf_dir} and "
+            "would silently blend two different corpora into one dataset:\n"
+            + "\n".join("  " + os.path.basename(p) for p in orphans[:10])
+            + "\nMove or delete them from data/processed/shards/ before merging "
+              "(see EXECUTION_Phase0.md)."
+        )
 
-    # First pass: gather hashes of all train positions
-    train_hashes = set()
-    n_train = 0
+    n_val = sum(int(h5py.File(p).attrs["n_val_pos"]) for p in shard_paths)
+    n_test = sum(int(h5py.File(p).attrs["n_test_pos"]) for p in shard_paths)
+    n_train = sum(int(h5py.File(p).attrs["n_pos"]) for p in shard_paths) - n_val - n_test
+
+    outputs = {
+        "train": _make_output(os.path.join(out_dir, "train.h5"), n_train),
+        "val": _make_output(os.path.join(out_dir, "val.h5"), n_val),
+        "test": _make_output(os.path.join(out_dir, "test.h5"), n_test),
+    }
+    counts = {"train": n_train, "val": n_val, "test": n_test}
+    offsets = {"train": 0, "val": 0, "test": 0}
     for sp in shard_paths:
         with h5py.File(sp, "r") as h:
             if int(h.attrs["n_pos"]) == 0:
                 continue
-            isv = h["is_val"][:].astype(bool)
-            states = h["states"][:]
-            # iterate train positions (isv == False)
-            for st in states[~isv]:
-                train_hashes.add(hashlib.sha1(st.ravel().tobytes()).hexdigest())
-            n_train += int((~isv).sum())
-
-    # Determine how many val positions will be kept (not duplicated in train)
-    n_val_kept = 0
-    for sp in shard_paths:
-        with h5py.File(sp, "r") as h:
-            if int(h.attrs["n_pos"]) == 0:
-                continue
-            isv = h["is_val"][:].astype(bool)
-            states = h["states"][:]
-            for st in states[isv]:
-                if hashlib.sha1(st.ravel().tobytes()).hexdigest() not in train_hashes:
-                    n_val_kept += 1
-
-    train = _make_output(os.path.join(out_dir, "train.h5"), n_train)
-    val = _make_output(os.path.join(out_dir, "val.h5"), n_val_kept)
-    ti = vi = 0
-    removed_val = 0
-    for sp in shard_paths:
-        with h5py.File(sp, "r") as h:
-            if int(h.attrs["n_pos"]) == 0:
-                continue
-            isv = h["is_val"][:].astype(bool)
-            ntr, nva = int((~isv).sum()), int(isv.sum())
+            split_flag = h["split"][:]
+            masks = {"train": split_flag == 0, "val": split_flag == 1, "test": split_flag == 2}
             for name in ("states", *_FIELDS_1D):
                 data = h[name][:]
-                if ntr:
-                    train[name][ti:ti + ntr] = data[~isv]
-                if nva:
-                    # filter val rows that duplicate any train position
-                    kept_idx = []
-                    for i, st in enumerate(data[isv]):
-                        hsh = hashlib.sha1(st.ravel().tobytes()).hexdigest()
-                        if hsh in train_hashes:
-                            removed_val += 1
-                            continue
-                        kept_idx.append(i)
-                    if kept_idx:
-                        # select the kept rows from the val block
-                        val_block = data[isv][kept_idx]
-                        val[name][vi:vi + len(val_block)] = val_block
-            ti += ntr
-            # advance val write pointer by number actually written from this shard
-            # recompute kept count for this shard to update vi
-            if nva:
-                # recount kept for this shard
-                states = h["states"][:]
-                kept = 0
-                for st in states[isv]:
-                    if hashlib.sha1(st.ravel().tobytes()).hexdigest() not in train_hashes:
-                        kept += 1
-                vi += kept
+                for split_name, mask in masks.items():
+                    n = int(mask.sum())
+                    if n:
+                        off = offsets[split_name]
+                        outputs[split_name][name][off:off + n] = data[mask]
+            for split_name, mask in masks.items():
+                offsets[split_name] += int(mask.sum())
 
-    for h, n in ((train, n_train), (val, n_val_kept),):
+    for split_name, h in outputs.items():
         for k, v in meta.items():
             h.attrs[k] = v
-        h.attrs["n_positions"] = n
-        # record dedupe stats
-        h.attrs["n_val_orig"] = n_val_orig
-        h.attrs["n_val_removed_duplicates"] = removed_val
+        h.attrs["n_positions"] = counts[split_name]
         h.close()
-    return n_train, n_val_kept
+    return n_train, n_val, n_test
 
 
 # ---------------------------------------------------------------------------
@@ -318,12 +312,12 @@ def build_metadata(totals, rules):
         "n_dropped": totals["n_dropped"],
         "n_skipped_meta": totals["n_skip_meta"],
         "created_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "val_split_mod": VAL_MOD,
+        "split_mod": SPLIT_MOD,
     }
 
 
-def write_dataset_card(out_dir, meta, n_train, n_val):
-    n_pos = n_train + n_val
+def write_dataset_card(out_dir, meta, n_train, n_val, n_test):
+    n_pos = n_train + n_val + n_test
     card = f"""# ZetaGo 7x7 Self-Play Dataset
 
 Supervised dataset of `(board_state_tensor, move_played, game_outcome)` triples for
@@ -349,17 +343,18 @@ move-prediction pre-training and unsupervised position analysis.
 
 ## Size
 - Games: **{meta['n_games']:,}**
-- Positions: **{n_pos:,}**  (train **{n_train:,}**, val **{n_val:,}**)
+- Positions: **{n_pos:,}**  (train **{n_train:,}**, val **{n_val:,}**, test **{n_test:,}**)
 - Games dropped for rule mismatch (tripwire, should be 0): **{meta['n_dropped']}**
 - Games skipped (wrong size/komi): **{meta['n_skipped_meta']}**
 - Created: {meta['created_utc']}
 
 ## Files
-- `train.h5`, `val.h5` (split by game via `crc32(file:line) % {meta['val_split_mod']}`)
-- `train.h5`, `val.h5` (split by game via `crc32(file:line) % {meta['val_split_mod']}`; validation positions that exactly match any train position are removed)
+- `train.h5`, `val.h5`, `test.h5` — split by game via `crc32(file:line) % {meta['split_mod']}`
+  (`== 0` val, `== 1` test, else train). All three splits are carved from the same
+  generation run, so they share one regime; see `Docs/results/DATASET.md` §11.
 - `shards/*.h5` — one shard per source `.sgfs` file (append-safe, resumable)
-- `train.csv`, `val.csv`, `sample.csv` — human-readable export (board as X/O/. rows joined
-  by `/`, move as `row,col`); regenerate with `venv/bin/python -m data.export_csv`
+- `train.csv`, `val.csv`, `test.csv`, `sample.csv` — human-readable export (board as X/O/.
+  rows joined by `/`, move as `row,col`); regenerate with `venv/bin/python -m data.export_csv`
 
 ## HDF5 schema
 | dataset | shape | dtype | meaning |
@@ -408,7 +403,7 @@ def main():
 
     print(f"Processing {len(files)} file(s) with {args.workers} worker(s)...")
     worker = partial(process_file, out_dir=shard_dir, force=args.force)
-    totals = {"n_pos": 0, "n_games": 0, "n_dropped": 0, "n_skip_meta": 0, "n_val_pos": 0}
+    totals = {"n_pos": 0, "n_games": 0, "n_dropped": 0, "n_skip_meta": 0, "n_val_pos": 0, "n_test_pos": 0}
     rules = ""
     with ProcessPoolExecutor(max_workers=args.workers) as ex:
         for i, res in enumerate(ex.map(worker, files), 1):
@@ -419,14 +414,15 @@ def main():
             print(f"  [{i}/{len(files)}] {res['file']}: {res['n_pos']:>7,} pos, "
                   f"{res['n_games']:>5,} games, dropped={res['n_dropped']} ({tag})")
 
-    print("Merging shards -> train.h5 / val.h5 ...")
+    print("Merging shards -> train.h5 / val.h5 / test.h5 ...")
     meta = build_metadata(totals, rules)
-    n_train, n_val = merge_shards(args.out_dir, meta)
-    write_dataset_card(args.out_dir, meta, n_train, n_val)
+    n_train, n_val, n_test = merge_shards(args.out_dir, meta, args.sgf_dir)
+    write_dataset_card(args.out_dir, meta, n_train, n_val, n_test)
 
     print("\n=== DONE ===")
     print(f"games:      {totals['n_games']:,}")
-    print(f"positions:  {n_train + n_val:,}  (train {n_train:,} / val {n_val:,})")
+    print(f"positions:  {n_train + n_val + n_test:,}  "
+          f"(train {n_train:,} / val {n_val:,} / test {n_test:,})")
     print(f"dropped (rule mismatch tripwire): {totals['n_dropped']}")
     print(f"skipped (wrong size/komi):        {totals['n_skip_meta']}")
     print(f"card: {os.path.join(args.out_dir, 'DATASET_CARD.md')}")

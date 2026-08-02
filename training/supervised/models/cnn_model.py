@@ -3,10 +3,23 @@
 This module wraps a small convnet and provides `fit` and `predict` methods so
 it can be used interchangeably with NumPy baselines. PyTorch is optional and
 only required when the `cnn` model is selected.
+
+The value head predicts the score margin, not win/loss (EXECUTION_Phase1.md
+task 1.1b): margins span +-58.5 with std ~16.3, so `fit`/`predict` divide by
+`value_scale` internally before feeding the combined policy+value loss (this
+keeps the value MSE term from swamping the policy cross-entropy term) and
+multiply back by `value_scale` on the way out, so callers always see raw
+margin units, same as every other model in this package.
+
+`checkpoint_path` (EXECUTION_Phase2.md task 2.0e) is optional, per-run epoch
+checkpointing: a Kaggle session that gets killed mid-epoch-loop on the sweep's
+dominant cell (full-volume N=7, per Phase 1 finding F5) resumes from the last
+completed epoch on the next session instead of retraining from scratch.
 """
 
 from __future__ import annotations
 
+import os
 from typing import Tuple
 
 import numpy as np
@@ -35,6 +48,8 @@ class CNNModel(SupervisedModel):
         seed: int = 42,
         device: str = "cpu",
         loss_fn: LossBase | None = None,
+        value_scale: float = 15.0,
+        checkpoint_path: str | None = None,
     ):
         try:
             import torch
@@ -48,6 +63,8 @@ class CNNModel(SupervisedModel):
         self.DataLoader = DataLoader
         self.Dataset = Dataset
 
+        self.in_channels = in_channels
+        self.hidden = hidden
         self.board_size = board_size
         self.num_moves = num_moves
         self.epochs = epochs
@@ -55,8 +72,14 @@ class CNNModel(SupervisedModel):
         self.lr = lr
         self.device = device
         self.seed = seed
+        self.value_scale = value_scale
         self.loss_fn = loss_fn or WeightedPolicyValueLoss(0.5)
+        self.checkpoint_path = checkpoint_path
 
+        # Seed before construction: weight initialisation happens inside _build_model,
+        # so seeding only in fit() (as before) left init unseeded and made runs at the
+        # same --seed non-reproducible, invalidating the multi-seed design.
+        torch.manual_seed(seed)
         self.model = self._build_model(in_channels, hidden).to(device)
         self.opt = torch.optim.Adam(self.model.parameters(), lr=lr)
 
@@ -89,7 +112,8 @@ class CNNModel(SupervisedModel):
                     nn.Linear(16 * b * b, 64),
                     nn.ReLU(inplace=True),
                     nn.Linear(64, 1),
-                    nn.Tanh(),
+                    # No Tanh: the value head regresses a normalised margin that
+                    # can exceed +-1 (raw margins span +-58.5); Tanh would clip it.
                 )
 
             def forward(self, x):
@@ -103,9 +127,14 @@ class CNNModel(SupervisedModel):
 
         class TensorSplit(self.Dataset):
             def __init__(self):
-                self.x = torch.from_numpy(x.astype(np.float32))
-                self.y_move = torch.from_numpy(y_move.astype(np.int64))
-                self.y_value = torch.from_numpy(y_value.astype(np.float32))
+                # np.asarray is a no-op when the dtype already matches, unlike
+                # ndarray.astype which copies unconditionally -- at N=7 full volume
+                # that second copy doubles 4.79 GB to 9.58 GB and OOMs (see F4,
+                # EXECUTION_Phase1.md task 1.2). make_features already returns
+                # float32, so this is always the fast path.
+                self.x = torch.from_numpy(np.asarray(x, dtype=np.float32))
+                self.y_move = torch.from_numpy(np.asarray(y_move, dtype=np.int64))
+                self.y_value = torch.from_numpy(np.asarray(y_value, dtype=np.float32))
 
             def __len__(self):
                 return len(self.y_move)
@@ -120,11 +149,20 @@ class CNNModel(SupervisedModel):
         torch.manual_seed(self.seed)
         np.random.seed(self.seed)
 
-        ds = self._make_dataset(x_train, y_move_train, y_value_train)
+        y_value_scaled = np.asarray(y_value_train, dtype=np.float32) / self.value_scale
+        ds = self._make_dataset(x_train, y_move_train, y_value_scaled)
         dl = self.DataLoader(ds, batch_size=self.batch_size, shuffle=True, num_workers=0)
 
+        start_epoch = 0
+        if self.checkpoint_path and os.path.exists(self.checkpoint_path):
+            ckpt = self.torch.load(self.checkpoint_path, map_location=self.device)
+            self.model.load_state_dict(ckpt["model"])
+            self.opt.load_state_dict(ckpt["opt"])
+            start_epoch = ckpt["epoch"]
+            print(f"[cnn] resumed from checkpoint at epoch {start_epoch}/{self.epochs}")
+
         self.model.train()
-        for ep in range(self.epochs):
+        for ep in range(start_epoch, self.epochs):
             loss_sum = 0.0
             n_batches = 0
             for xb, ymb, yvb in dl:
@@ -144,6 +182,33 @@ class CNNModel(SupervisedModel):
             avg_loss = loss_sum / max(1, n_batches)
             print(f"[cnn] epoch {ep + 1}/{self.epochs} loss={avg_loss:.4f}")
 
+            if self.checkpoint_path:
+                self.torch.save(
+                    {"model": self.model.state_dict(), "opt": self.opt.state_dict(), "epoch": ep + 1},
+                    self.checkpoint_path,
+                )
+
+    def save(self, path: str) -> None:
+        """Persist final weights plus everything `load_cnn` needs to rebuild this net.
+
+        Distinct from `checkpoint_path`: that one is transient resume scratch that
+        `trainer.py` deletes the moment a cell finishes, so a completed sweep leaves
+        no model behind. This one survives, and is what `eval/` loads to wrap a
+        trained champion in an agent (EXECUTION_Phase2.md task 2.3b).
+        """
+        os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+        self.torch.save(
+            {
+                "model": self.model.state_dict(),
+                "in_channels": self.in_channels,
+                "hidden": self.hidden,
+                "board_size": self.board_size,
+                "num_moves": self.num_moves,
+                "value_scale": self.value_scale,
+            },
+            path,
+        )
+
     def predict(self, x_val: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         ds = self._make_dataset(x_val, np.zeros(len(x_val), dtype=np.int64), np.zeros(len(x_val), dtype=np.float32))
         dl = self.DataLoader(ds, batch_size=self.batch_size, shuffle=False, num_workers=0)
@@ -160,5 +225,27 @@ class CNNModel(SupervisedModel):
 
         move_logits = np.concatenate(all_move_logits, axis=0)
         move_proba = softmax_np(move_logits)
-        value_pred = np.concatenate(all_value_pred, axis=0).astype(np.float32)
+        value_pred = np.concatenate(all_value_pred, axis=0).astype(np.float32) * self.value_scale
         return move_proba, value_pred
+
+
+def load_cnn(path: str, device: str = "cpu") -> CNNModel:
+    """Rebuild a `CNNModel` saved by `CNNModel.save` (task 2.3b), ready to predict.
+
+    Returned in eval mode with no optimiser state: this is for inference (the MCTS
+    prior/value estimator in task 2.4), not for resuming training.
+    """
+    import torch
+
+    blob = torch.load(path, map_location=device)
+    model = CNNModel(
+        in_channels=blob["in_channels"],
+        hidden=blob["hidden"],
+        board_size=blob["board_size"],
+        num_moves=blob["num_moves"],
+        value_scale=blob["value_scale"],
+        device=device,
+    )
+    model.model.load_state_dict(blob["model"])
+    model.model.eval()
+    return model
