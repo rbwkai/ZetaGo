@@ -153,6 +153,12 @@ tmp/
 katago/bin/
 katago/models/
 
+# Trained model weights -- 6.1 GB, far past GitHub's 100 MB/file limit (the RF
+# pickles alone are ~1.1 GB each). Regenerate with the command in
+# Docs/results/TRAINING_RESULTS.md SS31; archived separately as
+# ZetaGo-Obi_models.zip.
+models/
+
 # GTP engine logs
 gtp_logs/
 
