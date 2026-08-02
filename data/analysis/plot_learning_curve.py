@@ -6,7 +6,7 @@ Regenerates a figure that previously had no committed generator
 the figure. Emits PDF (vector line plot) rather than PNG.
 
 Run from the repo root:
-    venv/bin/python -m data.plot_learning_curve
+    venv/bin/python -m data.analysis.plot_learning_curve
 """
 
 import argparse

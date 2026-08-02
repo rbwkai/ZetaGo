@@ -41,7 +41,7 @@ ITEMS=(
   data/check_dataset.py
   data/export_csv.py
   data/sgf_reader.py
-  data/plot_class_distribution.py
+  data/analysis/plot_class_distribution.py
   data/__init__.py
   tests
   conftest.py

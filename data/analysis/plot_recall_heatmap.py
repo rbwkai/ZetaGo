@@ -9,7 +9,7 @@ Regenerates a figure that previously had no committed generator (F4). Uses
 rather than a rasterised image.
 
 Run from the repo root:
-    venv/bin/python -m data.plot_recall_heatmap
+    venv/bin/python -m data.analysis.plot_recall_heatmap
 """
 
 import argparse

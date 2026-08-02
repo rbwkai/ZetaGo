@@ -6,7 +6,7 @@ dominated by centre/tengen-adjacent points; measured, the single outsized
 class is `pass`, and the board-point distribution is comparatively flat.
 
 Run from the repo root:
-    venv/bin/python -m data.plot_class_distribution
+    venv/bin/python -m data.analysis.plot_class_distribution
 """
 
 import argparse

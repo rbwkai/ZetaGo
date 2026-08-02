@@ -12,10 +12,10 @@ Everything except `class_distribution` and `recall_heatmap` reads only from
 validation split (~2 min). `--skip-heavy` omits exactly those two.
 
 Run from the repo root:
-    venv/bin/python -m data.make_docs_figures                  # all, to Docs/figures/*.png
-    venv/bin/python -m data.make_docs_figures --skip-heavy     # results-only figures
-    venv/bin/python -m data.make_docs_figures --only factor_a_interaction
-    venv/bin/python -m data.make_docs_figures --list
+    venv/bin/python -m data.analysis.make_docs_figures                  # all, to Docs/figures/*.png
+    venv/bin/python -m data.analysis.make_docs_figures --skip-heavy     # results-only figures
+    venv/bin/python -m data.analysis.make_docs_figures --only factor_a_interaction
+    venv/bin/python -m data.analysis.make_docs_figures --list
 """
 
 import argparse
@@ -74,19 +74,19 @@ def _p_mathtext(p):
 # --------------------------------------------------------------- paper figures
 
 def fig_class_distribution(out_path, args):
-    from data.plot_class_distribution import plot
+    from .plot_class_distribution import plot
 
     plot(args.train_h5, out_path, "train")
 
 
 def fig_learning_curve(out_path, args):
-    from data.plot_learning_curve import load_curve, plot
+    from .plot_learning_curve import load_curve, plot
 
     plot(load_curve(os.path.join("results", "supervised_track_a_metrics.json")), out_path)
 
 
 def fig_recall_heatmap(out_path, args):
-    from data.plot_recall_heatmap import compute_recall, plot
+    from .plot_recall_heatmap import compute_recall, plot
 
     recall, counts = compute_recall(args.champion, 4, args.val_h5, 0)
     plot(recall, counts, out_path)
