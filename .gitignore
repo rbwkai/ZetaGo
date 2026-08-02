@@ -162,8 +162,6 @@ models/
 # GTP engine logs
 gtp_logs/
 
-# Phase 2 sweep outputs
-results/
 
 # LaTeX build artifacts (paper/) -- keep .tex/.bib/.cls/figures, not build output
 paper/*.pdf

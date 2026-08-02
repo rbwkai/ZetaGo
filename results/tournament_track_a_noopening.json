@@ -1,0 +1,1253 @@
+{
+  "model_path": "models/cnn_enc4_seed46_vol107969_none.pt",
+  "encoding": 4,
+  "n_simulations": 100,
+  "c_puct": 1.5,
+  "min_ply_before_pass": 20,
+  "games_per_colour": 25,
+  "n_games": 150,
+  "seed": 0,
+  "win_rate": {
+    "random": 0.03,
+    "greedy": 0.47,
+    "mcts": 1.0
+  },
+  "elo": {
+    "random": 0.0,
+    "greedy": 477.9914037064706,
+    "mcts": 1549.3603555410764
+  },
+  "elo_ci95": {
+    "random": [
+      0.0,
+      0.0
+    ],
+    "greedy": [
+      325.11286590774256,
+      NaN
+    ],
+    "mcts": [
+      1404.44670202007,
+      NaN
+    ]
+  },
+  "head_to_head": {
+    "random_vs_greedy": {
+      "games": 50,
+      "random_score": 3.0,
+      "greedy_score": 47.0
+    },
+    "random_vs_mcts": {
+      "games": 50,
+      "random_score": 0.0,
+      "mcts_score": 50.0
+    },
+    "greedy_vs_mcts": {
+      "games": 50,
+      "greedy_score": 0.0,
+      "mcts_score": 50.0
+    }
+  },
+  "games": [
+    {
+      "black": "random",
+      "white": "greedy",
+      "winner": "white",
+      "black_score": 14.0,
+      "white_score": 43.5,
+      "plies": 58
+    },
+    {
+      "black": "greedy",
+      "white": "random",
+      "winner": "black",
+      "black_score": 46.0,
+      "white_score": 10.5,
+      "plies": 63
+    },
+    {
+      "black": "random",
+      "white": "greedy",
+      "winner": "white",
+      "black_score": 3.0,
+      "white_score": 52.5,
+      "plies": 81
+    },
+    {
+      "black": "greedy",
+      "white": "random",
+      "winner": "black",
+      "black_score": 28.0,
+      "white_score": 27.5,
+      "plies": 48
+    },
+    {
+      "black": "random",
+      "white": "greedy",
+      "winner": "white",
+      "black_score": 4.0,
+      "white_score": 52.5,
+      "plies": 72
+    },
+    {
+      "black": "greedy",
+      "white": "random",
+      "winner": "black",
+      "black_score": 46.0,
+      "white_score": 10.5,
+      "plies": 55
+    },
+    {
+      "black": "random",
+      "white": "greedy",
+      "winner": "white",
+      "black_score": 7.0,
+      "white_score": 47.5,
+      "plies": 67
+    },
+    {
+      "black": "greedy",
+      "white": "random",
+      "winner": "black",
+      "black_score": 43.0,
+      "white_score": 14.5,
+      "plies": 71
+    },
+    {
+      "black": "random",
+      "white": "greedy",
+      "winner": "black",
+      "black_score": 28.0,
+      "white_score": 24.5,
+      "plies": 55
+    },
+    {
+      "black": "greedy",
+      "white": "random",
+      "winner": "black",
+      "black_score": 49.0,
+      "white_score": 9.5,
+      "plies": 79
+    },
+    {
+      "black": "random",
+      "white": "greedy",
+      "winner": "white",
+      "black_score": 17.0,
+      "white_score": 31.5,
+      "plies": 45
+    },
+    {
+      "black": "greedy",
+      "white": "random",
+      "winner": "black",
+      "black_score": 31.0,
+      "white_score": 26.5,
+      "plies": 50
+    },
+    {
+      "black": "random",
+      "white": "greedy",
+      "winner": "white",
+      "black_score": 1.0,
+      "white_score": 42.5,
+      "plies": 64
+    },
+    {
+      "black": "greedy",
+      "white": "random",
+      "winner": "black",
+      "black_score": 40.0,
+      "white_score": 15.5,
+      "plies": 69
+    },
+    {
+      "black": "random",
+      "white": "greedy",
+      "winner": "white",
+      "black_score": 2.0,
+      "white_score": 55.5,
+      "plies": 80
+    },
+    {
+      "black": "greedy",
+      "white": "random",
+      "winner": "black",
+      "black_score": 33.0,
+      "white_score": 24.5,
+      "plies": 49
+    },
+    {
+      "black": "random",
+      "white": "greedy",
+      "winner": "black",
+      "black_score": 31.0,
+      "white_score": 20.5,
+      "plies": 69
+    },
+    {
+      "black": "greedy",
+      "white": "random",
+      "winner": "black",
+      "black_score": 29.0,
+      "white_score": 27.5,
+      "plies": 45
+    },
+    {
+      "black": "random",
+      "white": "greedy",
+      "winner": "white",
+      "black_score": 17.0,
+      "white_score": 39.5,
+      "plies": 58
+    },
+    {
+      "black": "greedy",
+      "white": "random",
+      "winner": "black",
+      "black_score": 43.0,
+      "white_score": 12.5,
+      "plies": 64
+    },
+    {
+      "black": "random",
+      "white": "greedy",
+      "winner": "white",
+      "black_score": 2.0,
+      "white_score": 55.5,
+      "plies": 71
+    },
+    {
+      "black": "greedy",
+      "white": "random",
+      "winner": "black",
+      "black_score": 43.0,
+      "white_score": 12.5,
+      "plies": 72
+    },
+    {
+      "black": "random",
+      "white": "greedy",
+      "winner": "white",
+      "black_score": 21.0,
+      "white_score": 30.5,
+      "plies": 37
+    },
+    {
+      "black": "greedy",
+      "white": "random",
+      "winner": "black",
+      "black_score": 34.0,
+      "white_score": 24.5,
+      "plies": 55
+    },
+    {
+      "black": "random",
+      "white": "greedy",
+      "winner": "white",
+      "black_score": 20.0,
+      "white_score": 35.5,
+      "plies": 52
+    },
+    {
+      "black": "greedy",
+      "white": "random",
+      "winner": "black",
+      "black_score": 35.0,
+      "white_score": 21.5,
+      "plies": 53
+    },
+    {
+      "black": "random",
+      "white": "greedy",
+      "winner": "white",
+      "black_score": 21.0,
+      "white_score": 34.5,
+      "plies": 49
+    },
+    {
+      "black": "greedy",
+      "white": "random",
+      "winner": "black",
+      "black_score": 38.0,
+      "white_score": 17.5,
+      "plies": 57
+    },
+    {
+      "black": "random",
+      "white": "greedy",
+      "winner": "white",
+      "black_score": 1.0,
+      "white_score": 56.5,
+      "plies": 56
+    },
+    {
+      "black": "greedy",
+      "white": "random",
+      "winner": "black",
+      "black_score": 30.0,
+      "white_score": 27.5,
+      "plies": 52
+    },
+    {
+      "black": "random",
+      "white": "greedy",
+      "winner": "white",
+      "black_score": 23.0,
+      "white_score": 34.5,
+      "plies": 59
+    },
+    {
+      "black": "greedy",
+      "white": "random",
+      "winner": "black",
+      "black_score": 37.0,
+      "white_score": 21.5,
+      "plies": 59
+    },
+    {
+      "black": "random",
+      "white": "greedy",
+      "winner": "white",
+      "black_score": 2.0,
+      "white_score": 55.5,
+      "plies": 70
+    },
+    {
+      "black": "greedy",
+      "white": "random",
+      "winner": "black",
+      "black_score": 43.0,
+      "white_score": 13.5,
+      "plies": 67
+    },
+    {
+      "black": "random",
+      "white": "greedy",
+      "winner": "white",
+      "black_score": 20.0,
+      "white_score": 34.5,
+      "plies": 47
+    },
+    {
+      "black": "greedy",
+      "white": "random",
+      "winner": "black",
+      "black_score": 47.0,
+      "white_score": 10.5,
+      "plies": 79
+    },
+    {
+      "black": "random",
+      "white": "greedy",
+      "winner": "white",
+      "black_score": 3.0,
+      "white_score": 54.5,
+      "plies": 63
+    },
+    {
+      "black": "greedy",
+      "white": "random",
+      "winner": "black",
+      "black_score": 34.0,
+      "white_score": 22.5,
+      "plies": 65
+    },
+    {
+      "black": "random",
+      "white": "greedy",
+      "winner": "white",
+      "black_score": 5.0,
+      "white_score": 50.5,
+      "plies": 72
+    },
+    {
+      "black": "greedy",
+      "white": "random",
+      "winner": "black",
+      "black_score": 30.0,
+      "white_score": 24.5,
+      "plies": 55
+    },
+    {
+      "black": "random",
+      "white": "greedy",
+      "winner": "white",
+      "black_score": 16.0,
+      "white_score": 36.5,
+      "plies": 46
+    },
+    {
+      "black": "greedy",
+      "white": "random",
+      "winner": "black",
+      "black_score": 47.0,
+      "white_score": 10.5,
+      "plies": 61
+    },
+    {
+      "black": "random",
+      "white": "greedy",
+      "winner": "white",
+      "black_score": 20.0,
+      "white_score": 35.5,
+      "plies": 47
+    },
+    {
+      "black": "greedy",
+      "white": "random",
+      "winner": "black",
+      "black_score": 46.0,
+      "white_score": 11.5,
+      "plies": 71
+    },
+    {
+      "black": "random",
+      "white": "greedy",
+      "winner": "white",
+      "black_score": 1.0,
+      "white_score": 56.5,
+      "plies": 55
+    },
+    {
+      "black": "greedy",
+      "white": "random",
+      "winner": "black",
+      "black_score": 33.0,
+      "white_score": 24.5,
+      "plies": 56
+    },
+    {
+      "black": "random",
+      "white": "greedy",
+      "winner": "white",
+      "black_score": 4.0,
+      "white_score": 52.5,
+      "plies": 62
+    },
+    {
+      "black": "greedy",
+      "white": "random",
+      "winner": "white",
+      "black_score": 28.0,
+      "white_score": 30.5,
+      "plies": 58
+    },
+    {
+      "black": "random",
+      "white": "greedy",
+      "winner": "white",
+      "black_score": 3.0,
+      "white_score": 51.5,
+      "plies": 74
+    },
+    {
+      "black": "greedy",
+      "white": "random",
+      "winner": "black",
+      "black_score": 49.0,
+      "white_score": 9.5,
+      "plies": 75
+    },
+    {
+      "black": "random",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 4.0,
+      "white_score": 51.5,
+      "plies": 65
+    },
+    {
+      "black": "mcts",
+      "white": "random",
+      "winner": "black",
+      "black_score": 44.0,
+      "white_score": 10.5,
+      "plies": 72
+    },
+    {
+      "black": "random",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 22.0,
+      "white_score": 35.5,
+      "plies": 57
+    },
+    {
+      "black": "mcts",
+      "white": "random",
+      "winner": "black",
+      "black_score": 45.0,
+      "white_score": 11.5,
+      "plies": 69
+    },
+    {
+      "black": "random",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 8.0,
+      "white_score": 45.5,
+      "plies": 61
+    },
+    {
+      "black": "mcts",
+      "white": "random",
+      "winner": "black",
+      "black_score": 47.0,
+      "white_score": 10.5,
+      "plies": 73
+    },
+    {
+      "black": "random",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 23.0,
+      "white_score": 34.5,
+      "plies": 59
+    },
+    {
+      "black": "mcts",
+      "white": "random",
+      "winner": "black",
+      "black_score": 34.0,
+      "white_score": 23.5,
+      "plies": 58
+    },
+    {
+      "black": "random",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 2.0,
+      "white_score": 54.5,
+      "plies": 72
+    },
+    {
+      "black": "mcts",
+      "white": "random",
+      "winner": "black",
+      "black_score": 41.0,
+      "white_score": 14.5,
+      "plies": 65
+    },
+    {
+      "black": "random",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 4.0,
+      "white_score": 52.5,
+      "plies": 74
+    },
+    {
+      "black": "mcts",
+      "white": "random",
+      "winner": "black",
+      "black_score": 46.0,
+      "white_score": 11.5,
+      "plies": 77
+    },
+    {
+      "black": "random",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 3.0,
+      "white_score": 52.5,
+      "plies": 70
+    },
+    {
+      "black": "mcts",
+      "white": "random",
+      "winner": "black",
+      "black_score": 43.0,
+      "white_score": 12.5,
+      "plies": 72
+    },
+    {
+      "black": "random",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 4.0,
+      "white_score": 50.5,
+      "plies": 68
+    },
+    {
+      "black": "mcts",
+      "white": "random",
+      "winner": "black",
+      "black_score": 47.0,
+      "white_score": 10.5,
+      "plies": 77
+    },
+    {
+      "black": "random",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 16.0,
+      "white_score": 40.5,
+      "plies": 53
+    },
+    {
+      "black": "mcts",
+      "white": "random",
+      "winner": "black",
+      "black_score": 36.0,
+      "white_score": 21.5,
+      "plies": 63
+    },
+    {
+      "black": "random",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 3.0,
+      "white_score": 54.5,
+      "plies": 70
+    },
+    {
+      "black": "mcts",
+      "white": "random",
+      "winner": "black",
+      "black_score": 39.0,
+      "white_score": 12.5,
+      "plies": 60
+    },
+    {
+      "black": "random",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 2.0,
+      "white_score": 54.5,
+      "plies": 72
+    },
+    {
+      "black": "mcts",
+      "white": "random",
+      "winner": "black",
+      "black_score": 44.0,
+      "white_score": 12.5,
+      "plies": 77
+    },
+    {
+      "black": "random",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 20.0,
+      "white_score": 37.5,
+      "plies": 61
+    },
+    {
+      "black": "mcts",
+      "white": "random",
+      "winner": "black",
+      "black_score": 30.0,
+      "white_score": 28.5,
+      "plies": 53
+    },
+    {
+      "black": "random",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 0.0,
+      "white_score": 58.5,
+      "plies": 66
+    },
+    {
+      "black": "mcts",
+      "white": "random",
+      "winner": "black",
+      "black_score": 36.0,
+      "white_score": 20.5,
+      "plies": 62
+    },
+    {
+      "black": "random",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 18.0,
+      "white_score": 37.5,
+      "plies": 48
+    },
+    {
+      "black": "mcts",
+      "white": "random",
+      "winner": "black",
+      "black_score": 42.0,
+      "white_score": 13.5,
+      "plies": 63
+    },
+    {
+      "black": "random",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 4.0,
+      "white_score": 48.5,
+      "plies": 63
+    },
+    {
+      "black": "mcts",
+      "white": "random",
+      "winner": "black",
+      "black_score": 40.0,
+      "white_score": 15.5,
+      "plies": 58
+    },
+    {
+      "black": "random",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 18.0,
+      "white_score": 38.5,
+      "plies": 44
+    },
+    {
+      "black": "mcts",
+      "white": "random",
+      "winner": "black",
+      "black_score": 44.0,
+      "white_score": 12.5,
+      "plies": 73
+    },
+    {
+      "black": "random",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 1.0,
+      "white_score": 46.5,
+      "plies": 62
+    },
+    {
+      "black": "mcts",
+      "white": "random",
+      "winner": "black",
+      "black_score": 45.0,
+      "white_score": 11.5,
+      "plies": 63
+    },
+    {
+      "black": "random",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 3.0,
+      "white_score": 54.5,
+      "plies": 62
+    },
+    {
+      "black": "mcts",
+      "white": "random",
+      "winner": "black",
+      "black_score": 39.0,
+      "white_score": 18.5,
+      "plies": 54
+    },
+    {
+      "black": "random",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 5.0,
+      "white_score": 51.5,
+      "plies": 62
+    },
+    {
+      "black": "mcts",
+      "white": "random",
+      "winner": "black",
+      "black_score": 41.0,
+      "white_score": 14.5,
+      "plies": 67
+    },
+    {
+      "black": "random",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 5.0,
+      "white_score": 50.5,
+      "plies": 70
+    },
+    {
+      "black": "mcts",
+      "white": "random",
+      "winner": "black",
+      "black_score": 44.0,
+      "white_score": 12.5,
+      "plies": 77
+    },
+    {
+      "black": "random",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 7.0,
+      "white_score": 49.5,
+      "plies": 65
+    },
+    {
+      "black": "mcts",
+      "white": "random",
+      "winner": "black",
+      "black_score": 49.0,
+      "white_score": 9.5,
+      "plies": 69
+    },
+    {
+      "black": "random",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 14.0,
+      "white_score": 43.5,
+      "plies": 58
+    },
+    {
+      "black": "mcts",
+      "white": "random",
+      "winner": "black",
+      "black_score": 42.0,
+      "white_score": 14.5,
+      "plies": 67
+    },
+    {
+      "black": "random",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 4.0,
+      "white_score": 50.5,
+      "plies": 72
+    },
+    {
+      "black": "mcts",
+      "white": "random",
+      "winner": "black",
+      "black_score": 35.0,
+      "white_score": 21.5,
+      "plies": 51
+    },
+    {
+      "black": "random",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 9.0,
+      "white_score": 46.5,
+      "plies": 61
+    },
+    {
+      "black": "mcts",
+      "white": "random",
+      "winner": "black",
+      "black_score": 49.0,
+      "white_score": 9.5,
+      "plies": 73
+    },
+    {
+      "black": "random",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 15.0,
+      "white_score": 37.5,
+      "plies": 50
+    },
+    {
+      "black": "mcts",
+      "white": "random",
+      "winner": "black",
+      "black_score": 47.0,
+      "white_score": 10.5,
+      "plies": 68
+    },
+    {
+      "black": "greedy",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 27.0,
+      "white_score": 31.5,
+      "plies": 33
+    },
+    {
+      "black": "mcts",
+      "white": "greedy",
+      "winner": "black",
+      "black_score": 30.0,
+      "white_score": 26.5,
+      "plies": 26
+    },
+    {
+      "black": "greedy",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 27.0,
+      "white_score": 31.5,
+      "plies": 33
+    },
+    {
+      "black": "mcts",
+      "white": "greedy",
+      "winner": "black",
+      "black_score": 30.0,
+      "white_score": 26.5,
+      "plies": 26
+    },
+    {
+      "black": "greedy",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 27.0,
+      "white_score": 31.5,
+      "plies": 33
+    },
+    {
+      "black": "mcts",
+      "white": "greedy",
+      "winner": "black",
+      "black_score": 30.0,
+      "white_score": 26.5,
+      "plies": 26
+    },
+    {
+      "black": "greedy",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 27.0,
+      "white_score": 31.5,
+      "plies": 33
+    },
+    {
+      "black": "mcts",
+      "white": "greedy",
+      "winner": "black",
+      "black_score": 30.0,
+      "white_score": 26.5,
+      "plies": 26
+    },
+    {
+      "black": "greedy",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 27.0,
+      "white_score": 31.5,
+      "plies": 33
+    },
+    {
+      "black": "mcts",
+      "white": "greedy",
+      "winner": "black",
+      "black_score": 30.0,
+      "white_score": 26.5,
+      "plies": 26
+    },
+    {
+      "black": "greedy",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 27.0,
+      "white_score": 31.5,
+      "plies": 33
+    },
+    {
+      "black": "mcts",
+      "white": "greedy",
+      "winner": "black",
+      "black_score": 30.0,
+      "white_score": 26.5,
+      "plies": 26
+    },
+    {
+      "black": "greedy",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 27.0,
+      "white_score": 31.5,
+      "plies": 33
+    },
+    {
+      "black": "mcts",
+      "white": "greedy",
+      "winner": "black",
+      "black_score": 30.0,
+      "white_score": 26.5,
+      "plies": 26
+    },
+    {
+      "black": "greedy",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 27.0,
+      "white_score": 31.5,
+      "plies": 33
+    },
+    {
+      "black": "mcts",
+      "white": "greedy",
+      "winner": "black",
+      "black_score": 30.0,
+      "white_score": 26.5,
+      "plies": 26
+    },
+    {
+      "black": "greedy",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 27.0,
+      "white_score": 31.5,
+      "plies": 33
+    },
+    {
+      "black": "mcts",
+      "white": "greedy",
+      "winner": "black",
+      "black_score": 30.0,
+      "white_score": 26.5,
+      "plies": 26
+    },
+    {
+      "black": "greedy",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 27.0,
+      "white_score": 31.5,
+      "plies": 33
+    },
+    {
+      "black": "mcts",
+      "white": "greedy",
+      "winner": "black",
+      "black_score": 30.0,
+      "white_score": 26.5,
+      "plies": 26
+    },
+    {
+      "black": "greedy",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 27.0,
+      "white_score": 31.5,
+      "plies": 33
+    },
+    {
+      "black": "mcts",
+      "white": "greedy",
+      "winner": "black",
+      "black_score": 30.0,
+      "white_score": 26.5,
+      "plies": 26
+    },
+    {
+      "black": "greedy",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 27.0,
+      "white_score": 31.5,
+      "plies": 33
+    },
+    {
+      "black": "mcts",
+      "white": "greedy",
+      "winner": "black",
+      "black_score": 30.0,
+      "white_score": 26.5,
+      "plies": 26
+    },
+    {
+      "black": "greedy",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 27.0,
+      "white_score": 31.5,
+      "plies": 33
+    },
+    {
+      "black": "mcts",
+      "white": "greedy",
+      "winner": "black",
+      "black_score": 30.0,
+      "white_score": 26.5,
+      "plies": 26
+    },
+    {
+      "black": "greedy",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 27.0,
+      "white_score": 31.5,
+      "plies": 33
+    },
+    {
+      "black": "mcts",
+      "white": "greedy",
+      "winner": "black",
+      "black_score": 30.0,
+      "white_score": 26.5,
+      "plies": 26
+    },
+    {
+      "black": "greedy",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 27.0,
+      "white_score": 31.5,
+      "plies": 33
+    },
+    {
+      "black": "mcts",
+      "white": "greedy",
+      "winner": "black",
+      "black_score": 30.0,
+      "white_score": 26.5,
+      "plies": 26
+    },
+    {
+      "black": "greedy",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 27.0,
+      "white_score": 31.5,
+      "plies": 33
+    },
+    {
+      "black": "mcts",
+      "white": "greedy",
+      "winner": "black",
+      "black_score": 30.0,
+      "white_score": 26.5,
+      "plies": 26
+    },
+    {
+      "black": "greedy",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 27.0,
+      "white_score": 31.5,
+      "plies": 33
+    },
+    {
+      "black": "mcts",
+      "white": "greedy",
+      "winner": "black",
+      "black_score": 30.0,
+      "white_score": 26.5,
+      "plies": 26
+    },
+    {
+      "black": "greedy",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 27.0,
+      "white_score": 31.5,
+      "plies": 33
+    },
+    {
+      "black": "mcts",
+      "white": "greedy",
+      "winner": "black",
+      "black_score": 30.0,
+      "white_score": 26.5,
+      "plies": 26
+    },
+    {
+      "black": "greedy",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 27.0,
+      "white_score": 31.5,
+      "plies": 33
+    },
+    {
+      "black": "mcts",
+      "white": "greedy",
+      "winner": "black",
+      "black_score": 30.0,
+      "white_score": 26.5,
+      "plies": 26
+    },
+    {
+      "black": "greedy",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 27.0,
+      "white_score": 31.5,
+      "plies": 33
+    },
+    {
+      "black": "mcts",
+      "white": "greedy",
+      "winner": "black",
+      "black_score": 30.0,
+      "white_score": 26.5,
+      "plies": 26
+    },
+    {
+      "black": "greedy",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 27.0,
+      "white_score": 31.5,
+      "plies": 33
+    },
+    {
+      "black": "mcts",
+      "white": "greedy",
+      "winner": "black",
+      "black_score": 30.0,
+      "white_score": 26.5,
+      "plies": 26
+    },
+    {
+      "black": "greedy",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 27.0,
+      "white_score": 31.5,
+      "plies": 33
+    },
+    {
+      "black": "mcts",
+      "white": "greedy",
+      "winner": "black",
+      "black_score": 30.0,
+      "white_score": 26.5,
+      "plies": 26
+    },
+    {
+      "black": "greedy",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 27.0,
+      "white_score": 31.5,
+      "plies": 33
+    },
+    {
+      "black": "mcts",
+      "white": "greedy",
+      "winner": "black",
+      "black_score": 30.0,
+      "white_score": 26.5,
+      "plies": 26
+    },
+    {
+      "black": "greedy",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 27.0,
+      "white_score": 31.5,
+      "plies": 33
+    },
+    {
+      "black": "mcts",
+      "white": "greedy",
+      "winner": "black",
+      "black_score": 30.0,
+      "white_score": 26.5,
+      "plies": 26
+    },
+    {
+      "black": "greedy",
+      "white": "mcts",
+      "winner": "white",
+      "black_score": 27.0,
+      "white_score": 31.5,
+      "plies": 33
+    },
+    {
+      "black": "mcts",
+      "white": "greedy",
+      "winner": "black",
+      "black_score": 30.0,
+      "white_score": 26.5,
+      "plies": 26
+    }
+  ]
+}
