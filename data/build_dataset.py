@@ -53,7 +53,7 @@ SPLIT_NAMES = ("train", "val", "test")
 SGF_DIR = "data/raw/sgf"
 OUT_DIR = "data/processed"
 SHARD_DIR = os.path.join(OUT_DIR, "shards")
-CONFIG_PATH = "katago/configs/selfplay7x7_match.cfg"
+CONFIG_PATH = "environment/katago/configs/selfplay7x7_match.cfg"
 KATAGO_VERSION = "v1.16.5 (Eigen/CPU, AVX2)"
 SCHEMA_VERSION = 1
 

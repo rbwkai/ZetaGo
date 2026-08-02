@@ -38,12 +38,12 @@ tests/             pytest suite (rules, captures, ko/superko, scoring, encoding,
 gui/               Pygame interface (theme, assets, board_view, widgets, app)
 play_gui.py        GUI entry point
 play_terminal.py   ASCII terminal play (Human vs Random / KataGo)
-katago_gtp.py      KataGo GTP subprocess client (used by GUI + terminal)
+environment/katago/katago_gtp.py      KataGo GTP subprocess client (used by GUI + terminal)
 data/              Dataset generation + extraction
   build_dataset.py   replay SGFs -> HDF5 shards + train/val + DATASET_CARD.md
   export_csv.py      HDF5 -> human-readable CSV
   sgf_reader.py      KataGo .sgfs parser
-katago/
+environment/katago/
   bin/               KataGo binary + bundled configs   (gitignored)
   models/            neural nets                        (gitignored)
   configs/           selfplay7x7_match.cfg, gui_gtp.cfg (tracked)
@@ -107,11 +107,11 @@ move is legal and that counted games agree on the winner — the strongest corre
 
 ## Generate the dataset
 
-KataGo (CPU/Eigen build) and a small net are expected under `katago/`. Then:
+KataGo (CPU/Eigen build) and a small net are expected under `environment/katago/`. Then:
 
 ```bash
 # 1. Self-play game generation (writes .sgfs files)
-katago/bin/katago match -config katago/configs/selfplay7x7_match.cfg \
+environment/katago/bin/katago match -config environment/katago/configs/selfplay7x7_match.cfg \
     -sgf-output-dir data/raw/sgf -log-file data/raw/match.log
 
 # 2. Extract (state, move, outcome) triples to HDF5 (+ shards, train/val, dataset card)
@@ -138,13 +138,13 @@ files. A non-zero "dropped" count is a tripwire that the engine and KataGo rules
 | `game_id` | [N] | uint32  | stable per-game id |
 | `move_no` | [N] | int16   | ply within the game |
 
-## KataGo setup
+### KataGo setup
 
-A CPU (Eigen) KataGo build and a neural net go under `katago/bin/` and `katago/models/`
+A CPU (Eigen) KataGo build and a neural net go under `environment/katago/bin/` and `environment/katago/models/`
 (both gitignored). A small net such as `g170e-b10c128` keeps self-play and GUI responses fast
 on CPU; download it from the [KataGo releases](https://github.com/lightvector/KataGo/releases)
 or [katagotraining.org](https://katagotraining.org/). See `KATAGO_INTEGRATION.md` for the GTP
-client details. The committed configs in `katago/configs/` pin the rules above.
+client details. The committed configs in `environment/katago/configs/` pin the rules above.
 
 ## Engine API (quick reference)
 

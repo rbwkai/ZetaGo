@@ -30,7 +30,7 @@ trap 'rm -rf "$STAGING"' EXIT
 cp "$ROOT_DIR/kaggle/code-dataset-metadata.json" "$STAGING/dataset-metadata.json"
 
 # Allow-list: everything training/eval actually imports, nothing else.
-# katago/ (131 MB of binary + network) and environment/gui|assets/ (pygame,
+# environment/katago/ (131 MB of binary + network) and environment/gui|assets/ (pygame,
 # unused on the training path) are deliberately excluded -- see
 # EXECUTION_Phase2.md SS2.2 for why.
 ITEMS=(

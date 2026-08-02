@@ -8,7 +8,7 @@ move-prediction pre-training and unsupervised position analysis.
 - **Network:** `g170e-b10c128-s1141046784-d204142634.txt.gz`
   - sha256: `3d8a24697ba25fe4da39af4c2b6bd405907b0ad8295322f5a550fa2d8fe4a2f4`
 - **Search:** maxVisits = 16, numSearchThreads = 1
-- **Generated config:** `katago/configs/selfplay7x7_match.cfg`
+- **Generated config:** `environment/katago/configs/selfplay7x7_match.cfg`
 
 ## Rules (identical in the engine and in generation)
 - Board size: **7x7**
@@ -51,7 +51,7 @@ Root attrs on `train.h5`/`val.h5` record every field above plus `schema_version`
 
 ## Reproduce
 ```bash
-katago/bin/katago match -config katago/configs/selfplay7x7_match.cfg \
-    -sgf-output-dir data/raw/sgf -log-file data/raw/match.log
+environment/katago/bin/katago match -config environment/katago/configs/selfplay7x7_match.cfg \
+  -sgf-output-dir data/raw/sgf -log-file data/raw/match.log
 venv/bin/python -m data.build_dataset
 ```
