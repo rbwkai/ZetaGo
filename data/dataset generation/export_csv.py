@@ -4,9 +4,9 @@ Each CSV row is one position. The board is reconstructed in absolute colours
 (``X`` = Black, ``O`` = White, ``.`` = empty) as seven 7-character rows joined by
 ``/`` so a person can read it directly, e.g. ``......./...XO../..XO.O./...`` .
 
-    venv/bin/python -m data.export_csv                       # train/val/test.h5 -> .csv, plus sample
-    venv/bin/python -m data.export_csv --in data/processed/val.h5 --out data/processed/val.csv
-    venv/bin/python -m data.export_csv --in data/processed/train.h5 --out s.csv --limit 500
+    venv/bin/python "data/dataset generation/export_csv.py"                       # train/val/test.h5 -> .csv, plus sample
+    venv/bin/python "data/dataset generation/export_csv.py" --in data/processed/val.h5 --out data/processed/val.csv
+    venv/bin/python "data/dataset generation/export_csv.py" --in data/processed/train.h5 --out s.csv --limit 500
 """
 
 import argparse

@@ -32,9 +32,9 @@ oracle check is the check that actually caught the corruption above. Always
 run `venv/bin/python -m pytest -q -m oracle` (or the full suite) after any
 regeneration, before trusting a build_dataset run's output.
 
-Run after ``python -m data.build_dataset``:
-    venv/bin/python -m data.check_dataset
-    venv/bin/python -m data.check_dataset --train other/train.h5 --val other/val.h5 --test other/test.h5
+Run after ``python \"data/dataset generation/build_dataset.py\"``:
+    venv/bin/python "data/dataset generation/check_dataset.py"
+    venv/bin/python "data/dataset generation/check_dataset.py" --train other/train.h5 --val other/val.h5 --test other/test.h5
 """
 
 import argparse

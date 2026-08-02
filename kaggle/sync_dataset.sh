@@ -24,7 +24,7 @@ fi
 
 for f in train.h5 val.h5 test.h5; do
   if [ ! -f "$ROOT_DIR/data/processed/$f" ]; then
-    echo "error: $ROOT_DIR/data/processed/$f is missing -- run data/build_dataset.py first" >&2
+    echo "error: $ROOT_DIR/data/processed/$f is missing -- run data/dataset generation/build_dataset.py first" >&2
     exit 1
   fi
 done

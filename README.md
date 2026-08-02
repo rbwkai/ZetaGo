@@ -41,8 +41,13 @@ play_terminal.py   ASCII terminal play (Human vs Random / KataGo)
 environment/katago/katago_gtp.py      KataGo GTP subprocess client (used by GUI + terminal)
 data/              Dataset generation + extraction
   build_dataset.py   replay SGFs -> HDF5 shards + train/val + DATASET_CARD.md
+  analysis/          figure scripts for papers and docs
   export_csv.py      HDF5 -> human-readable CSV
   sgf_reader.py      KataGo .sgfs parser
+eval/              evaluation harnesses and analyses
+  track_a/run_tournament.py  Track A round-robin tournament runner
+  bridge_analysis.py         Track B bridge analysis
+  final_test_eval.py         held-out final evaluation
 environment/katago/
   bin/               KataGo binary + bundled configs   (gitignored)
   models/            neural nets                        (gitignored)
@@ -73,7 +78,7 @@ pip install --upgrade pip
 pip install numpy h5py scikit-learn
 
 # run a quick kNN baseline on a small subset for speed
-python3 train_supervised.py --model knn --encodings 2 --max-train 2000 --max-val 500 --knn-k 11
+python3 training/train_supervised.py --model knn --encodings 2 --max-train 2000 --max-val 500 --knn-k 11
 ```
 
 ## Play (GUI)
@@ -115,10 +120,10 @@ environment/katago/bin/katago match -config environment/katago/configs/selfplay7
     -sgf-output-dir data/raw/sgf -log-file data/raw/match.log
 
 # 2. Extract (state, move, outcome) triples to HDF5 (+ shards, train/val, dataset card)
-venv/bin/python -m data.build_dataset
+venv/bin/python "data/dataset generation/build_dataset.py"
 
 # 3. Optional: human-readable CSV export
-venv/bin/python -m data.export_csv
+venv/bin/python "data/dataset generation/export_csv.py"
 ```
 
 Outputs land in `data/processed/` (`train.h5`, `val.h5`, `shards/`, `train.csv`, `val.csv`,

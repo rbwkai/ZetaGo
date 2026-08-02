@@ -1,0 +1,87 @@
+\relax 
+\citation{silver2016mastering}
+\citation{silver2017mastering}
+\citation{silver2018general}
+\citation{wu2019accelerating}
+\citation{kocsis2006bandit}
+\citation{soemers2019biasing}
+\citation{david2016deepchess}
+\citation{mcgrath2022acquisition}
+\citation{czech2023representation}
+\citation{hewitt2019designing}
+\citation{vanderwerf2003solving}
+\citation{guyon2003introduction}
+\citation{bishop2006pattern}
+\@writefile{toc}{\contentsline {section}{\numberline {I}Introduction}{1}{}\protected@file@percent }
+\newlabel{sec:intro}{{I}{1}{}{section.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {II}Related Work}{1}{}\protected@file@percent }
+\newlabel{sec:related}{{II}{1}{}{section.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {III}Dataset}{1}{}\protected@file@percent }
+\newlabel{sec:dataset}{{III}{1}{}{section.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-A}}Generation}{1}{}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces Train/val/test split. All three carved from one generation run; game-level overlap verified $=0$ for every pair.}}{2}{}\protected@file@percent }
+\newlabel{tab:splits}{{I}{2}{}{table.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-B}}Splits}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-C}}Policy label}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-D}}Value label: a baseline trap}{2}{}\protected@file@percent }
+\newlabel{sec:valuetrap}{{\mbox  {III-D}}{2}{}{subsection.3.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-E}}Duplication and train/val position overlap}{2}{}\protected@file@percent }
+\newlabel{sec:duplication}{{\mbox  {III-E}}{2}{}{subsection.3.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Move-label distribution, training split ($n=3{,}310{,}156$). Mode is \texttt  {pass} (9.09\%), not a board point; board-point distribution is comparatively flat (max 3.29\%, centre). Basis for macro-F1 as ``50-way classification whose largest class is pass,'' not severe imbalance.}}{2}{}\protected@file@percent }
+\newlabel{fig:classdist}{{1}{2}{}{figure.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {IV}Methodology}{2}{}\protected@file@percent }
+\newlabel{sec:methodology}{{IV}{2}{}{section.4}{}}
+\citation{kocsis2006bandit,silver2016mastering}
+\citation{hinton2006reducing}
+\citation{hewitt2019designing}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-A}}Search-augmented evaluation}{3}{}\protected@file@percent }
+\newlabel{sec:mctsmethod}{{\mbox  {IV-A}}{3}{}{subsection.4.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces Test-set results, full volume, N=4, 5 seeds (mean$\pm $SD), read exactly once after all decisions were frozen on validation.}}{3}{}\protected@file@percent }
+\newlabel{tab:testresults}{{II}{3}{}{table.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-B}}Unsupervised representation}{3}{}\protected@file@percent }
+\newlabel{sec:track_b_method}{{\mbox  {IV-B}}{3}{}{subsection.4.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {V}Results}{3}{}\protected@file@percent }
+\newlabel{sec:results}{{V}{3}{}{section.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-A}}Move prediction}{3}{}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {III}{\ignorespaces Mean top-1 accuracy by model and data volume (5 seeds, 3 encodings). Bold marks the row maximum.}}{4}{}\protected@file@percent }
+\newlabel{tab:top1}{{III}{4}{}{table.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Mean top-1 accuracy vs.\ mean unique training positions (log scale), one line per model, mean over 3 encodings and 5 seeds. Classical models plateau by $\sim $13k unique positions; the CNN does not.}}{4}{}\protected@file@percent }
+\newlabel{fig:learning}{{2}{4}{}{figure.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-B}}Feature richness (Factor A)}{4}{}\protected@file@percent }
+\newlabel{sec:factorA}{{\mbox  {V-B}}{4}{}{subsection.5.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {IV}{\ignorespaces Round-robin strength, 25 games/colour/pair, 4 random opening plies. Elo anchored at \texttt  {random}.}}{4}{}\protected@file@percent }
+\newlabel{tab:tournament}{{IV}{4}{}{table.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-C}}Value target}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-D}}Error analysis}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-E}}Search-augmented playing strength}{4}{}\protected@file@percent }
+\newlabel{sec:mctsresults}{{\mbox  {V-E}}{4}{}{subsection.5.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Per-point top-1 recall, champion model (val) --- diagonal of the 50-class confusion matrix on board geometry. \texttt  {pass} (93.0\% recall, $n{=}16{,}849$) is the 50th class, not shown. Error concentrates on the centre's immediate neighbours, not distant points.}}{5}{}\protected@file@percent }
+\newlabel{fig:recall}{{3}{5}{}{figure.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-F}}Duplication ablation}{5}{}\protected@file@percent }
+\newlabel{sec:dedupablation}{{\mbox  {V-F}}{5}{}{subsection.5.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-G}}Unsupervised representation}{5}{}\protected@file@percent }
+\newlabel{sec:track_b}{{\mbox  {V-G}}{5}{}{subsection.5.7}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {V}{\ignorespaces Linear-probe $R^2$ recovering board statistics from a $64$-d latent. Every control $R^2$ (shuffled target, identical protocol) is in $[-0.02, 0.00]$; every probe below clears it.}}{5}{}\protected@file@percent }
+\newlabel{tab:probes}{{V}{5}{}{table.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {VI}Discussion}{5}{}\protected@file@percent }
+\newlabel{sec:discussion}{{VI}{5}{}{section.6}{}}
+\bibstyle{IEEEtran}
+\bibdata{refs}
+\bibcite{silver2016mastering}{1}
+\bibcite{silver2017mastering}{2}
+\bibcite{silver2018general}{3}
+\bibcite{wu2019accelerating}{4}
+\bibcite{kocsis2006bandit}{5}
+\bibcite{soemers2019biasing}{6}
+\bibcite{david2016deepchess}{7}
+\bibcite{mcgrath2022acquisition}{8}
+\bibcite{czech2023representation}{9}
+\bibcite{hewitt2019designing}{10}
+\bibcite{vanderwerf2003solving}{11}
+\bibcite{guyon2003introduction}{12}
+\bibcite{bishop2006pattern}{13}
+\bibcite{hinton2006reducing}{14}
+\@writefile{toc}{\contentsline {section}{\numberline {VII}Conclusion}{6}{}\protected@file@percent }
+\newlabel{sec:conclusion}{{VII}{6}{}{section.7}{}}
+\@writefile{toc}{\contentsline {section}{References}{6}{}\protected@file@percent }
+\gdef \@abspage@last{6}

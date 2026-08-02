@@ -37,9 +37,9 @@ ITEMS=(
   environment/engine
   training
   eval
-  data/build_dataset.py
-  data/check_dataset.py
-  data/export_csv.py
+  "data/dataset generation/build_dataset.py"
+  "data/dataset generation/check_dataset.py"
+  "data/dataset generation/export_csv.py"
   data/sgf_reader.py
   data/analysis/plot_class_distribution.py
   data/__init__.py

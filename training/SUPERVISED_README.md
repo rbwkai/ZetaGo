@@ -14,19 +14,19 @@ pip install -r requirements.txt
 
 ```bash
 # small-ish baseline run (fast)
-python train_supervised.py --model logreg --encodings 2 --max-train 30000 --max-val 5000 --baseline-train-cap 20000
+python training/train_supervised.py --model logreg --encodings 2 --max-train 30000 --max-val 5000 --baseline-train-cap 20000
 ```
 
 3) Full comparison (all models, all encodings):
 
 ```bash
-python train_supervised.py --model all --encodings 2 4 7
+python training/train_supervised.py --model all --encodings 2 4 7
 ```
 
 4) Quick CNN test (if you have GPU):
 
 ```bash
-python train_supervised.py --model cnn --encodings 7 --epochs 4 --device cuda
+python training/train_supervised.py --model cnn --encodings 7 --epochs 4 --device cuda
 ```
 
 Files produced:

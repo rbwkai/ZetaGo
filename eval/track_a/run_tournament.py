@@ -9,7 +9,7 @@ MCTS here is evaluation-time only: weights never change and no simulated game is
 recorded as training data (this document's SS1).
 
 Usage:
-  python -m eval.run_tournament --model-path models/supervised/cnn_enc4_seed46_vol107969_none.pt \
+  python -m eval.track_a.run_tournament --model-path models/supervised/cnn_enc4_seed46_vol107969_none.pt \
       --encoding 4 --games-per-colour 25
 """
 
@@ -21,9 +21,9 @@ import os
 
 from training.supervised.models.cnn_model import load_cnn
 
-from .agents import GreedyAgent, MCTSAgent, UniformRandomAgent
-from .elo import bootstrap_elo_ci, bradley_terry_strengths, to_elo
-from .tournament import round_robin, win_rate
+from ..agents import GreedyAgent, MCTSAgent, UniformRandomAgent
+from ..elo import bootstrap_elo_ci, bradley_terry_strengths, to_elo
+from ..tournament import round_robin, win_rate
 
 
 def parse_args():

@@ -20,7 +20,7 @@ lower margin variance) and was not comparable to train/val. Splitting one run
 three ways instead removes that mismatch by construction.
 
 Run from the repo root:
-    venv/bin/python -m data.build_dataset
+    venv/bin/python "data/dataset generation/build_dataset.py"
 """
 
 import argparse
@@ -354,7 +354,7 @@ move-prediction pre-training and unsupervised position analysis.
   generation run, so they share one regime; see `Docs/results/DATASET.md` §11.
 - `shards/*.h5` — one shard per source `.sgfs` file (append-safe, resumable)
 - `train.csv`, `val.csv`, `test.csv`, `sample.csv` — human-readable export (board as X/O/.
-  rows joined by `/`, move as `row,col`); regenerate with `venv/bin/python -m data.export_csv`
+    rows joined by `/`, move as `row,col`); regenerate with `venv/bin/python "data/dataset generation/export_csv.py"`
 
 ## HDF5 schema
 | dataset | shape | dtype | meaning |
@@ -373,7 +373,7 @@ Root attrs on `train.h5`/`val.h5` record every field above plus `schema_version`
 ```bash
 katago/bin/katago match -config {CONFIG_PATH} \\
     -sgf-output-dir data/raw/sgf -log-file data/raw/match.log
-venv/bin/python -m data.build_dataset
+venv/bin/python "data/dataset generation/build_dataset.py"
 ```
 """
     with open(os.path.join(out_dir, "DATASET_CARD.md"), "w") as fh:

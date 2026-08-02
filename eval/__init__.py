@@ -1,4 +1,4 @@
-"""Evaluation harness for Track A agents: play games, run round-robins, rate with Elo.
+"""Evaluation harnesses for tournament play, held-out scoring, and analysis.
 
-See EXECUTION_Phase1.md task 1.5.
+Track A tournament-specific code now lives in `eval.track_a`.
 """
