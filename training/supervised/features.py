@@ -20,11 +20,49 @@ is a capture/placement diff, not a ko indicator, and is named accordingly.
 All functions operate on NumPy arrays and return NumPy arrays.
 """
 
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 
 import numpy as np
 
 BOARD = 7
+
+
+def find_groups(board: np.ndarray) -> List[Tuple[int, List[Tuple[int, int]], set]]:
+    """Connected-component groups on a single (BOARD, BOARD) int8 board (+1/-1/0).
+
+    Returns one `(color, cells, liberties)` tuple per group, black groups
+    before white, in row-major discovery order. Shared by `_liberty_plane`
+    below and `training/unsupervised/board_stats.py` (EXECUTION_Phase3.md
+    task 3.0b) so the flood-fill traversal exists in exactly one place.
+    """
+    visited = np.zeros((BOARD, BOARD), dtype=bool)
+    groups: List[Tuple[int, List[Tuple[int, int]], set]] = []
+
+    for color in (1, -1):
+        for r in range(BOARD):
+            for c in range(BOARD):
+                if board[r, c] != color or visited[r, c]:
+                    continue
+
+                stack = [(r, c)]
+                cells = []
+                libs = set()
+                visited[r, c] = True
+                while stack:
+                    x, y = stack.pop()
+                    cells.append((x, y))
+                    for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
+                        if nx < 0 or nx >= BOARD or ny < 0 or ny >= BOARD:
+                            continue
+                        if board[nx, ny] == 0:
+                            libs.add((nx, ny))
+                        elif board[nx, ny] == color and not visited[nx, ny]:
+                            visited[nx, ny] = True
+                            stack.append((nx, ny))
+
+                groups.append((color, cells, libs))
+
+    return groups
 
 
 def _liberty_plane(curr: np.ndarray, opp: np.ndarray) -> np.ndarray:
@@ -39,33 +77,10 @@ def _liberty_plane(curr: np.ndarray, opp: np.ndarray) -> np.ndarray:
         board[opp[i] > 0] = -1
 
         plane = np.zeros((BOARD, BOARD), dtype=np.float32)
-        visited = np.zeros((BOARD, BOARD), dtype=bool)
-
-        for color in (1, -1):
-            for r in range(BOARD):
-                for c in range(BOARD):
-                    if board[r, c] != color or visited[r, c]:
-                        continue
-
-                    stack = [(r, c)]
-                    group = []
-                    libs = set()
-                    visited[r, c] = True
-                    while stack:
-                        x, y = stack.pop()
-                        group.append((x, y))
-                        for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
-                            if nx < 0 or nx >= BOARD or ny < 0 or ny >= BOARD:
-                                continue
-                            if board[nx, ny] == 0:
-                                libs.add((nx, ny))
-                            elif board[nx, ny] == color and not visited[nx, ny]:
-                                visited[nx, ny] = True
-                                stack.append((nx, ny))
-
-                    v = min(len(libs), 4) / 4.0
-                    for gx, gy in group:
-                        plane[gx, gy] = v
+        for _color, cells, libs in find_groups(board):
+            v = min(len(libs), 4) / 4.0
+            for gx, gy in cells:
+                plane[gx, gy] = v
 
         out[i] = plane
 

@@ -22,11 +22,21 @@ The value head predicts the score margin (task 1.1b), not win/loss: `values`
 (+-1) is no longer used as a training target anywhere in this module. Derived
 win/loss accuracy (sign of the predicted margin) is reported via
 `value_acc`/`value_baseline_acc`, always beside the side-to-move baseline.
+
+`--resume`/`--checkpoint-dir` (EXECUTION_Phase2.md tasks 2.0d/2.0e) make the
+sweep safe to run across multiple time-boxed Kaggle sessions: `--resume`
+skips (model, encoding, seed, dedup, volume) cells already present in
+`--out-json` and saves after every cell, not just at the end; `--checkpoint-dir`
+additionally saves the CNN's epoch state so the sweep's single dominant cell
+(full-volume N=7, finding F5) can resume mid-epoch-loop rather than from
+scratch.
 """
 
 import argparse
+import json
+import os
 import time
-from typing import Dict, List, Tuple
+from typing import Dict, List, Set, Tuple
 
 import numpy as np
 
@@ -91,6 +101,27 @@ def parse_args() -> argparse.Namespace:
 
     ap.add_argument("--out-csv", default="results/supervised_track_a_metrics.csv")
     ap.add_argument("--out-json", default="results/supervised_track_a_metrics.json")
+
+    ap.add_argument(
+        "--resume",
+        action="store_true",
+        help="skip (model, encoding, seed, dedup, volume) cells already present in --out-json, "
+        "and save progress after every cell rather than only at the end (EXECUTION_Phase2.md "
+        "task 2.0d) -- needed because a Kaggle session's time limit can kill the process at any "
+        "point, with no graceful-shutdown chance to save",
+    )
+    ap.add_argument(
+        "--checkpoint-dir",
+        default="",
+        help="per-cell epoch checkpointing for the CNN model only (task 2.0e); empty disables it",
+    )
+    ap.add_argument(
+        "--save-model-dir",
+        default="",
+        help="persist each completed CNN cell's final weights here (task 2.3b); empty disables it. "
+        "Unlike --checkpoint-dir, these files survive cell completion -- they are what eval/ loads "
+        "to wrap a trained champion in an agent",
+    )
     return ap.parse_args()
 
 
@@ -208,6 +239,24 @@ def _unique_position_count(states: np.ndarray) -> int:
     return len({s.tobytes() for s in states})
 
 
+def _run_key(row: RunMetrics) -> Tuple[str, int, int, str, int]:
+    return (row.model, row.encoding, row.seed, row.dedup, row.data_volume_games)
+
+
+def _load_resume_state(out_json: str) -> Tuple[List[RunMetrics], Set[Tuple[str, int, int, str, int]]]:
+    """Load a prior --out-json for --resume. Baseline rows (seed=-1) are
+    excluded from both the returned rows and the completed-key set: they're
+    cheap to recompute and are always re-appended fresh in `main()`, so a
+    resumed run never carries forward a stale baseline row."""
+    if not os.path.exists(out_json):
+        return [], set()
+    with open(out_json) as f:
+        raw_rows = json.load(f)
+    rows = [RunMetrics(**r) for r in raw_rows if r["seed"] != -1]
+    completed = {_run_key(r) for r in rows}
+    return rows, completed
+
+
 def main() -> None:
     args = parse_args()
     device = _resolve_device(args.device)
@@ -257,6 +306,13 @@ def main() -> None:
         ),
     ]
 
+    completed_keys: Set[Tuple[str, int, int, str, int]] = set()
+    if args.resume:
+        resumed_rows, completed_keys = _load_resume_state(args.out_json)
+        rows.extend(resumed_rows)
+        if resumed_rows:
+            print(f"\n--resume: {len(resumed_rows)} cell(s) already in {args.out_json}, will be skipped")
+
     names = _selected_models(args.model)
     volume_levels = _parse_volumes(args.volumes)
     val_features_cache: Dict[int, np.ndarray] = {}
@@ -287,8 +343,22 @@ def main() -> None:
                 y_value_val = val["margins"]
 
                 for name in names:
+                    key = (name, enc, seed, args.dedup, games_used)
+                    if args.resume and key in completed_keys:
+                        print(f"Skipping {name} (seed={seed}, N={enc}, games={games_used:,}) -- already in --out-json")
+                        continue
+
                     print(f"Training {name} (seed={seed}, N={enc}, games={games_used:,})...")
-                    model = create_model(name, in_channels=x_train.shape[1], args=args, device=device, seed=seed)
+                    checkpoint_path = None
+                    if args.checkpoint_dir and name == "cnn":
+                        os.makedirs(args.checkpoint_dir, exist_ok=True)
+                        checkpoint_path = os.path.join(
+                            args.checkpoint_dir, f"cnn_enc{enc}_seed{seed}_vol{games_used}_{args.dedup}.pt"
+                        )
+                    model = create_model(
+                        name, in_channels=x_train.shape[1], args=args, device=device, seed=seed,
+                        checkpoint_path=checkpoint_path,
+                    )
 
                     metrics = _evaluate_one(
                         name, enc, seed, args.dedup, volume, model,
@@ -297,6 +367,32 @@ def main() -> None:
                         value_baseline_acc, args.baseline_train_cap,
                     )
                     rows.append(metrics)
+                    save_metrics(rows, args.out_csv, args.out_json)
+                    if args.save_model_dir:
+                        os.makedirs(args.save_model_dir, exist_ok=True)
+                        if name == "cnn":
+                            model.save(
+                                os.path.join(
+                                    args.save_model_dir,
+                                    f"cnn_enc{enc}_seed{seed}_vol{games_used}_{args.dedup}.pt",
+                                )
+                            )
+                        else:
+                            # Classical (sklearn-backed) models have no save() of their
+                            # own (task 4.0a/EXECUTION_Phase4.md F2: only the CNN champion
+                            # survived the sweep) -- joblib pickles the wrapper directly,
+                            # sklearn estimators included.
+                            import joblib
+
+                            joblib.dump(
+                                model,
+                                os.path.join(
+                                    args.save_model_dir,
+                                    f"{name}_enc{enc}_seed{seed}_vol{games_used}_{args.dedup}.joblib",
+                                ),
+                            )
+                    if checkpoint_path and os.path.exists(checkpoint_path):
+                        os.remove(checkpoint_path)
 
     print_summary(rows)
     save_metrics(rows, args.out_csv, args.out_json)

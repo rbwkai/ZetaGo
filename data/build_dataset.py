@@ -351,7 +351,7 @@ move-prediction pre-training and unsupervised position analysis.
 ## Files
 - `train.h5`, `val.h5`, `test.h5` — split by game via `crc32(file:line) % {meta['split_mod']}`
   (`== 0` val, `== 1` test, else train). All three splits are carved from the same
-  generation run, so they share one regime; see `Docs/DATASET.md` §11.
+  generation run, so they share one regime; see `Docs/results/DATASET.md` §11.
 - `shards/*.h5` — one shard per source `.sgfs` file (append-safe, resumable)
 - `train.csv`, `val.csv`, `test.csv`, `sample.csv` — human-readable export (board as X/O/.
   rows joined by `/`, move as `row,col`); regenerate with `venv/bin/python -m data.export_csv`

@@ -1,11 +1,11 @@
 """Acceptance gates for a freshly built train/val/test dataset.
 
-Ten checks from ``Docs/EXECUTION_Phase0.md`` Sec. 5 that must all pass before any
+Ten checks from ``Docs/execution/EXECUTION_Phase0.md`` Sec. 5 that must all pass before any
 model is trained on the dataset: they catch a repeat of the low-diversity /
 resignation-collapse / komi-filter failure modes that made the corpus this
 document replaces unusable. Three more (G11-G13) verify the Phase 1 task 1.2b
 fix: test must be carved from the same generation run as train/val, not a
-separately-generated run from a different regime (see ``Docs/DATASET.md`` §11).
+separately-generated run from a different regime (see ``Docs/results/DATASET.md`` §11).
 
 G10 (val rows whose exact board position also occurs somewhere in train) is
 reported, not enforced as pass/fail: this overlap is concentrated almost
@@ -18,7 +18,7 @@ G2/G3 thresholds were revised after a second Phase 0 investigation: the original
 <3x / >200,000 targets were calibrated against a corpus generated with
 `policyInitAreaProp` diversity, which was then found to silently corrupt ~94%
 of games (KataGo's `match` subcommand does not record policy-init stones in
-the SGF -- see the config file's comments and Docs/EXECUTION_Phase0.md). The
+the SGF -- see the config file's comments and Docs/execution/EXECUTION_Phase0.md). The
 safe replacement (chosenMoveTemperature-only diversity, oracle-verified
 stable at 98.5% winner-agreement across scale) has a lower diversity ceiling
 inherent to 7x7 Go's converging opening tree. G2/G3 here are calibrated as an
@@ -65,7 +65,7 @@ def _margin_std(h):
 def _side_to_move_baseline(h):
     # "predict a win iff White is to move": players +1 Black, -1 White; values
     # +1 win / -1 loss / 0 jigo from the side-to-move's perspective (see F2,
-    # Docs/DATASET.md §8/§9).
+    # Docs/results/DATASET.md §8/§9).
     players = h["players"][:]
     values = h["values"][:]
     if len(values) == 0:
@@ -164,7 +164,7 @@ def run_gates(train_path: str, val_path: str, test_path: str | None = None) -> b
 
     print()
     print("ALL BLOCKING GATES PASSED — safe to proceed to training." if all_pass
-          else "GATES FAILED — do not train on this dataset. See Docs/EXECUTION_Phase0.md.")
+          else "GATES FAILED — do not train on this dataset. See Docs/execution/EXECUTION_Phase0.md.")
     tr.close()
     va.close()
     if te is not None:

@@ -13,7 +13,9 @@ from .random_forest_model import RandomForestModel
 from .svm_model import SVMModel
 
 
-def create_model(name: str, in_channels: int, args, device: str, seed: int) -> SupervisedModel:
+def create_model(
+    name: str, in_channels: int, args, device: str, seed: int, checkpoint_path: str | None = None
+) -> SupervisedModel:
     if name == "logreg":
         return LogisticRegressionModel(seed=seed)
     if name == "rf":
@@ -35,5 +37,6 @@ def create_model(name: str, in_channels: int, args, device: str, seed: int) -> S
             device=device,
             loss_fn=loss_fn,
             value_scale=args.value_scale,
+            checkpoint_path=checkpoint_path,
         )
     raise ValueError(f"unknown model: {name}")

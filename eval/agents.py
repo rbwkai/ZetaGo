@@ -24,6 +24,8 @@ import numpy as np
 
 from training.supervised.features import make_features
 
+from .mcts import run_mcts
+
 
 class Agent(Protocol):
     def reset(self) -> None: ...
@@ -114,3 +116,51 @@ class GreedyAgent:
 
         move_index = int(np.argmax(proba))
         return None if move_index == pass_index else move_index
+
+
+class MCTSAgent:
+    """Wraps a fitted `SupervisedModel` behind a PUCT search (`eval/mcts.py`,
+    EXECUTION_Phase2.md SS1) instead of a single argmax call. Evaluation-time
+    only: the wrapped model's weights never change and no simulated game is
+    ever recorded as a training example -- this is a search algorithm, not a
+    training method (the distinction the faculty MCTS question turned on).
+    Same live-history bookkeeping as `GreedyAgent`, so N=7's history planes
+    see this game's actual past positions in every simulated line too."""
+
+    def __init__(
+        self,
+        model,
+        encoding: int,
+        n_simulations: int = 100,
+        c_puct: float = 1.5,
+        min_ply_before_pass: int = 20,
+        margin_scale: float = 15.0,
+        game_id: int = 0,
+    ):
+        self.model = model
+        self.encoding = encoding
+        self.n_simulations = n_simulations
+        self.c_puct = c_puct
+        self.min_ply_before_pass = min_ply_before_pass
+        self.margin_scale = margin_scale
+        self.game_id = game_id
+        self._states: List[np.ndarray] = []
+        self._players: List[int] = []
+        self._move_nos: List[int] = []
+
+    def reset(self) -> None:
+        self._states = []
+        self._players = []
+        self._move_nos = []
+
+    def select_move(self, board) -> Optional[int]:
+        self._states.append(board.get_tensor())
+        self._players.append(board.current_player)
+        self._move_nos.append(board.move_number)
+
+        return run_mcts(
+            board, self.model, self.encoding,
+            self._states, self._players, self._move_nos, self.game_id,
+            n_simulations=self.n_simulations, c_puct=self.c_puct,
+            min_ply_before_pass=self.min_ply_before_pass, margin_scale=self.margin_scale,
+        )

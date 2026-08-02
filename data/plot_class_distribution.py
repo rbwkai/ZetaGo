@@ -56,7 +56,7 @@ def plot(h5_path: str, out_path: str, split_name: str) -> None:
     fig.tight_layout()
 
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
-    fig.savefig(out_path, dpi=150)
+    fig.savefig(out_path)
     plt.close(fig)
     print(f"wrote {out_path}  (mode=pass {shares[PASS_INDEX]:.3f}%, "
           f"max board point {shares[:PASS_INDEX].max():.3f}%)")
@@ -65,7 +65,7 @@ def plot(h5_path: str, out_path: str, split_name: str) -> None:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--in", dest="inp", default="data/processed/train.h5")
-    ap.add_argument("--out", default="paper/figures/class_distribution.png")
+    ap.add_argument("--out", default="Docs/paper/figures/class_distribution.pdf")
     ap.add_argument("--split-name", default="train")
     args = ap.parse_args()
     plot(args.inp, args.out, args.split_name)
